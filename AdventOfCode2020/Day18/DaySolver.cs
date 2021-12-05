@@ -4,39 +4,37 @@ namespace AdventOfCode2020.Day18
 {
     public class DaySolver : SolverBase
     {
-        protected override string DayNo => "12";
+        protected override string DayNo => "18";
 
         protected override string Solve(string[] input)
         {
+            for(int i = 28; i < input.Length; i++)
+            {
+                var x = Evaluate(input[i].Trim());
+            }
             var result = input.Select(x => x.Trim()).Select(Evaluate).Sum();
             return result.ToString();
         }
 
         private long Evaluate(string exp)
         {
-            int pos = 0;
-            long leftN = 0;
-
-            while (pos < exp.Length)
+            if (exp.Length == 1)
             {
-                if (leftN == 0)
-                {
-                    var leftStr = GetTerm2(exp, pos, out pos);
-                    leftN = Calculate(leftStr);
-                }
-
-                var operation = exp[pos + 1];
-                pos = pos + 3;
-                var rightStr = GetTerm2(exp, pos, out pos);
-                long rightN = Calculate(rightStr);
+                return long.Parse(exp);
+            }
+            if (exp.Length == 5)
+            {
+                var operation = exp[2];
+                long left = long.Parse(exp.Substring(0, 1));
+                long right = long.Parse(exp.Substring(4, 1));
 
                 if (operation == '+')
                 {
-                    leftN = leftN + rightN;
+                    return left + right;
                 }
                 else if (operation == '*')
                 {
-                    leftN = leftN * rightN;
+                    return left * right;
                 }
                 else
                 {
@@ -44,7 +42,15 @@ namespace AdventOfCode2020.Day18
                 }
             }
 
-            return leftN;
+
+            var sums = SplitBy(exp, '*');
+            if (sums.Count == 1)
+            {
+                sums = SplitBy(sums[0], '+');
+                return sums.Select(x => Evaluate(x)).Sum();
+            }
+
+            return sums.Select(x => Evaluate(x)).Aggregate(1L, (r, x) => r * x);
         }
 
         private long Calculate(string exp)
@@ -72,18 +78,6 @@ namespace AdventOfCode2020.Day18
             }
         }
 
-        private string GetTerm2(string exp, int start, out int end)
-        {
-            if (exp[start] == '(')
-            {
-                return GetBrackets(exp, start, out end);
-            }
-            else
-            {
-                return GetBracketsAndAddition(exp, start, out end);
-            }
-        }
-
         private string GetBrackets(string exp, int start, out int end)
         {
             end = start + 1;
@@ -104,74 +98,70 @@ namespace AdventOfCode2020.Day18
             return exp.Substring(start + 1, end - start - 2);
         }
 
-        private string GetBracketsAndAddition(string exp, int start, out int end)
+        private List<string> SplitBy(string exp, char separatorOperation)
         {
-            end = start;
-            bool isNextMultiplication = false;
-            int? firstSumPos = null;
-            int sumCount = 0;
-
-            if (exp.Length == 5)
+            int start = 0;
+            int pos = 0;
+            var terms = new List<string>();
+            int brackets = 0;
+            int? firstBracketStart = null;
+            int? firstBracketEnd = null;
+            while (pos < exp.Length)
             {
-                isNextMultiplication = true;
-                end++;
-            }
-
-            while (!isNextMultiplication && end < exp.Length && sumCount <= 1)
-            {
-                if (exp[end] == '(')
+                if (exp[pos] == '(')
                 {
-                    end++;
-                    int brackets = 1;
-                    while (brackets > 0)
+                    if (brackets == 0) firstBracketStart = pos;
+                    brackets++;
+                    pos++;
+                }
+                else if (brackets > 0 && exp[pos] == ')')
+                {
+                    firstBracketEnd = pos;
+                    brackets--;
+                    pos++;
+                    if (brackets == 0)
                     {
-                        if (exp[end] == '(')
-                        {
-                            brackets++;
-                        }
-                        else if (exp[end] == ')')
-                        {
-                            brackets--;
-                        }
-                        end++;
+                        pos--;
                     }
-                    end--;
                 }
-                else if (end + 2 >= exp.Length)
+                else if (brackets == 0)
                 {
-                    isNextMultiplication = true;
-                    end++;
-                }
-                else if (exp[end + 2] == '*')
-                {
-                    isNextMultiplication = true;
-                    end++;
-                }
-                else if (exp[end + 2] == '+')
-                {
-                    sumCount++;
-                    if (sumCount == 1)
+                    if (pos == exp.Length - 1)
                     {
-                        firstSumPos = end;
-                        end += 4;
+                        var term = exp.Substring(start, pos - start + 1);
+                        if (firstBracketStart == start && firstBracketEnd == pos)
+                        {
+                            firstBracketStart = firstBracketEnd = null;
+                            term = term.Substring(1, term.Length - 2);
+                        }
+                        terms.Add(term);
+                        pos++;
+                    }
+                    else if (exp[pos + 2] == separatorOperation)
+                    {
+                        var term = exp.Substring(start, pos - start + 1);
+                        if (firstBracketStart == start && firstBracketEnd == pos)
+                        {
+                            firstBracketStart = firstBracketEnd = null;
+                            term = term.Substring(1, term.Length - 2);
+                        }
+                        terms.Add(term);
+                        pos += 4;
+                        start = pos;
                     }
                     else
                     {
-                        end = firstSumPos.Value + 1;
+                        pos += 4;
                     }
                 }
                 else
                 {
-                    end += 4;
+                    // continue till the closing bracket
+                    pos++;
                 }
             }
 
-            if (firstSumPos != null && end == exp.Length)
-            {
-                end = firstSumPos.Value + 1;
-            }
-
-            return exp.Substring(start, end - start);
+            return terms;
         }
     }
 }
