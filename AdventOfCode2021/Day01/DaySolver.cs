@@ -4,7 +4,7 @@ namespace AdventOfCode2021.Day01
 {
     public class DaySolver : SolverBase
     {
-        protected override string DayNo => "12";
+        protected override string DayNo => "01";
 
         protected override string Solve(string[] input)
         {

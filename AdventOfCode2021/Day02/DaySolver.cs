@@ -2,24 +2,11 @@
 
 namespace AdventOfCode2021.Day02
 {
-    public class DaySolver
+    public class DaySolver : SolverBase
     {
-        private string day = "02";
-        private string[] input = Array.Empty<string>();
+        protected override string DayNo => "02";
 
-        public async Task<string> SolveSampleAsync()
-        {
-            input = await InputReader.ReadStringArrayAsync($"Day{day}/sample.txt");
-            return Solve();
-        }
-
-        public async Task<string> SolvePersonalAsync()
-        {
-            input = await InputReader.ReadStringArrayAsync($"Day{day}/personal.txt");
-            return Solve();
-        }
-
-        private string Solve()
+        protected override string Solve(string[] input)
         {
             int x = 0;
             int y = 0;
