@@ -17,6 +17,29 @@ namespace AdventOfCode2021.Day08
             var count = numbers.SelectMany(x => x.data).Count(x => x.Length == 4 || x.Length == 2 || x.Length == 3|| x.Length == 7);
 
             // Part 2
+            //  0:      1:      2:      3:      4:
+            //  aaaa    ....    aaaa    aaaa    ....
+            // b    c  .    c  .    c  .    c  b    c
+            // b    c  .    c  .    c  .    c  b    c
+            //  ....    ....    dddd    dddd    dddd
+            // e    f  .    f  e    .  .    f  .    f
+            // e    f  .    f  e    .  .    f  .    f
+            //  gggg    ....    gggg    gggg    ....
+            //
+            //  5:      6:      7:      8:      9:
+            //  aaaa    aaaa    aaaa    aaaa    aaaa
+            // b    .  b    .  .    c  b    c  b    c
+            // b    .  b    .  .    c  b    c  b    c
+            //  dddd    dddd    ....    dddd    dddd
+            // .    f  e    f  .    f  e    f  .    f
+            // .    f  e    f  .    f  e    f  .    f
+            //  gggg    gggg    ....    gggg    gggg
+
+            // Idea: 
+            // 1: determine simple numbers by distinct amount of segments in it. applied for 1,4,7,8
+            // 2: to distinguish numbers with the same amount of segments mask them out with a known number to obtain a single match
+            // e.g. mask numbers with 6 segments (possibly 0,6 or 9) by 1 => result with 5 segmens is 6
+
             long sum = 0;
             foreach (var number in numbers)
             {
