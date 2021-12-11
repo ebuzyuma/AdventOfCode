@@ -7,8 +7,6 @@
         protected override string Solve(string[] input)
         {
             var grid = input.Select(x => x.Select(y => int.Parse(y.ToString())).ToList()).ToList();
-            var nextState = new List<List<int>>();
-
             var neighbours = new List<(int, int)>
             {
                 (-1, -1),
