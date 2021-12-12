@@ -14,7 +14,7 @@ namespace AdventOfCode2021
 
         public virtual async Task SolvePersonalAsync()
         {
-            Console.WriteLine("Sample:");
+            Console.WriteLine("Personal:");
             await SolveAsync(async () => await InputReader.ReadStringArrayAsync($"Day{DayNo}/personal.txt"));
         }
 
@@ -25,6 +25,7 @@ namespace AdventOfCode2021
 
             Console.WriteLine($"Part 1: {answer.part1}");
             Console.WriteLine($"Part 2: {answer.part2}");
+            Console.WriteLine();
         }
 
         protected abstract (string part1, string part2) Solve(string[] input);
