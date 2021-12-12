@@ -8,19 +8,33 @@ namespace AdventOfCode2021.Day12
 
         protected override (string, string) Solve(string[] input)
         {
-            var adjasent = input.Select(x => x.Trim().Split("-").ToList()).ToList();
+            var adjacent = input.Select(x => x.Trim().Split("-").ToList()).ToList();
+            var nodes = adjacent.SelectMany(x => x).Distinct().ToList();
+            var smallNodes = nodes.Where(x => x.ToLower() == x).ToHashSet();
 
-            var pathes1 = BuildPathes1(String.Empty, "start", adjasent, new HashSet<string>());
-            var pathes2 = BuildPathes2(String.Empty, "start", adjasent, new HashSet<string>(), false);
-            return (pathes1.Count.ToString(), pathes2.Distinct().Count().ToString());
+            var adjacentDict = nodes.ToDictionary(k => k, v => new HashSet<string>());
+            foreach (var line in adjacent)
+            {
+                adjacentDict[line[0]].Add(line[1]);
+                adjacentDict[line[1]].Add(line[0]);
+            }
+
+            var pathes1 = BuildPathes1(String.Empty, "start", adjacentDict, smallNodes, new HashSet<string>());
+            var pathes2 = BuildPathes2(String.Empty, "start", adjacentDict, smallNodes, null);
+            return (pathes1.Count.ToString(), pathes2.Count().ToString());
         }
 
-        private List<string> BuildPathes1(string currentPath, string node, List<List<string>> adjasent, HashSet<string> visited)
+        private List<string> BuildPathes1(
+            string currentPath,
+            string node,
+            Dictionary<string, HashSet<string>> adjacent,
+            HashSet<string> smallNodes,
+            HashSet<string> visitedNodes)
         {
             currentPath += $"{node},";
-            if (Regex.IsMatch(node, "[a-z]+"))
+            if (smallNodes.Contains(node))
             {
-                visited.Add(node);
+                visitedNodes.Add(node);
             }
 
             if (node == "end")
@@ -29,52 +43,46 @@ namespace AdventOfCode2021.Day12
             }
 
             var pathes = new List<string>();
-            var children = adjasent.Where(x => x.Contains(node))
-                .Select(x => x.Single(y => y != node))
-                .ToList();
-            var nodesToVisit = children.Where(x => !visited.Contains(x)).ToList();
+            var children = adjacent[node];
+            var nodesToVisit = children.Where(x => !visitedNodes.Contains(x)).ToList();
             foreach (var child in nodesToVisit)
             {
-                var childPathes = BuildPathes1(currentPath, child, adjasent, new HashSet<string>(visited));
+                var childPathes = BuildPathes1(currentPath, child, adjacent, smallNodes, new HashSet<string>(visitedNodes));
                 pathes.AddRange(childPathes);
             }
 
             return pathes;
         }
 
-
-
-        private List<string> BuildPathes2(string currentPath, string node, List<List<string>> adjasent, HashSet<string> visited, bool hasTwiceNode)
+        private List<string> BuildPathes2(
+            string currentPath,
+            string node,
+            Dictionary<string, HashSet<string>> adjacent,
+            HashSet<string> smallNodes,
+            string? twiceVisitedCave)
         {
-            currentPath += $"{node},";
-            bool isSmall = Regex.IsMatch(node, "[a-z]+");
-            if (isSmall)
-            {
-                visited.Add(node);
-            }
-
+            var newPath = currentPath + $"{node},";
             if (node == "end")
             {
-                return new List<string> { currentPath };
+                return new List<string> { newPath };
             }
 
             var pathes = new List<string>();
-            var children = adjasent.Where(x => x.Contains(node))
-                .Select(x => x.Single(y => y != node))
+            var children = adjacent[node];
+            var nodesToVisit = children
+                .Where(x => x != "start" 
+                    && (!smallNodes.Contains(x) 
+                    || !currentPath.Contains(x) || twiceVisitedCave == null))
                 .ToList();
-            var nodesToVisit = children.Where(x => !visited.Contains(x)).ToList();
-            var visited2 = new HashSet<string>(visited);
-            visited2.Remove(node);
             foreach (var child in nodesToVisit)
             {
-
-                var childPathes = BuildPathes2(currentPath, child, adjasent, new HashSet<string>(visited), hasTwiceNode);
-                pathes.AddRange(childPathes);
-                if (!hasTwiceNode && isSmall && node != "start" && node != "end")
+                string newTwiceVisitedCave = twiceVisitedCave;
+                if (twiceVisitedCave == null && smallNodes.Contains(child) && currentPath.Contains(child))
                 {
-                    childPathes = BuildPathes2(currentPath, child, adjasent, new HashSet<string>(visited2), true);
-                    pathes.AddRange(childPathes);
+                    newTwiceVisitedCave = child;
                 }
+                var childPathes = BuildPathes2(newPath, child, adjacent, smallNodes, newTwiceVisitedCave);
+                pathes.AddRange(childPathes);
             }
 
             return pathes;
