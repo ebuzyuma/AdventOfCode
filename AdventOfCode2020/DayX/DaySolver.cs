@@ -1,12 +1,12 @@
 ﻿namespace AdventOfCode2020.Day
 {
-    public class DaySolver : SolverBase
+    public class DaySolver : SolverBase2
     {
         protected override string DayNo => "";
 
-        protected override string Solve(string[] input)
+        protected override (string part1, string part2) Solve(string[] input)
         {
-            return string.Empty;
+            return ("".ToString(), "".ToString());
         }
     }
 }
