@@ -80,6 +80,12 @@
     <Content Include="Day12\sample.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Day13\personal.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Day13\sample.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="DayX\personal.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
