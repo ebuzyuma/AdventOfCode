@@ -14,37 +14,41 @@ namespace AdventOfCode2021.Day13
                 .ToList();
             var sizeRow = dots.Max(x => x.row) + 1;
             var sizeColumn = dots.Max(x => x.column) + 1;
-            var matrix = new char[sizeRow, sizeColumn];
+            var paper = new bool[sizeRow, sizeColumn];
             foreach (var item in dots)
             {
-                matrix[item.row, item.column] = '#';
+                paper[item.row, item.column] = true;
             }
 
             var instructions = split[1].Select(x => x.Split("="))
                 .Select(x => (type: x[0], pos: int.Parse(x[1])))
                 .ToList();
 
+            int countAfter1Fold = 0;
             for (int i = 0; i < instructions.Count; i++)
             {
+                if (i == 1)
+                {
+                    // Part 1
+                    countAfter1Fold = paper.Cast<bool>().Count(marked => marked);
+                }
                 if (instructions[i].type == "fold along x")
                 {
-                    matrix = FoldLeft(matrix, instructions[i].pos);
+                    paper = FoldLeft(paper, instructions[i].pos);
                 }
                 else
                 {
-                    matrix = FoldUp(matrix, instructions[i].pos);
+                    paper = FoldUp(paper, instructions[i].pos);
                 }
             }
 
-            var count = 0;
-            for (int i = 0; i < matrix.GetLength(0); i++)
+            for (int i = 0; i < paper.GetLength(0); i++)
             {
-                for (int j = 0; j < matrix.GetLength(1); j++)
+                for (int j = 0; j < paper.GetLength(1); j++)
                 {
-                    if (matrix[i,j] == '#')
+                    if (paper[i,j])
                     {
                         Console.Write('#');
-                        count++;
                     }
                     else
                     {
@@ -55,12 +59,13 @@ namespace AdventOfCode2021.Day13
                 Console.WriteLine();
             }
 
-            return (count.ToString(), "".ToString());
+            return (countAfter1Fold.ToString(), "".ToString());
         }
 
-        private char[,] FoldLeft(char[,] matrix, int pos)
+
+        private bool[,] FoldLeft(bool[,] matrix, int pos)
         {
-            var newMatrix = new char[matrix.GetLength(0), pos];
+            var newMatrix = new bool[matrix.GetLength(0), pos];
             for (int row = 0; row < matrix.GetLength(0); row++)
             {
                 for (int column = 0; column < matrix.GetLength(1); column++)
@@ -72,10 +77,7 @@ namespace AdventOfCode2021.Day13
                     else if (column > pos)
                     {
                         var distFromPos = column - pos;
-                        if (newMatrix[row, pos - distFromPos] != '#')
-                        {
-                            newMatrix[row, pos - distFromPos] = matrix[row, column];
-                        }
+                        newMatrix[row, pos - distFromPos] |= matrix[row, column];
                     }
                 }
             }
@@ -83,9 +85,9 @@ namespace AdventOfCode2021.Day13
             return newMatrix;
         }
 
-        private char[,] FoldUp(char[,] matrix, int pos)
+        private bool[,] FoldUp(bool[,] matrix, int pos)
         {
-            var newMatrix = new char[pos, matrix.GetLength(1)];
+            var newMatrix = new bool[pos, matrix.GetLength(1)];
             for (int row = 0; row < matrix.GetLength(0); row++)
             {
                 for (int column = 0; column < matrix.GetLength(1); column++)
@@ -97,10 +99,7 @@ namespace AdventOfCode2021.Day13
                     else if (row > pos)
                     {
                         var distFromPos = row - pos;
-                        if (newMatrix[pos - distFromPos, column] != '#')
-                        {
-                            newMatrix[pos - distFromPos, column] = matrix[row, column];
-                        }
+                        newMatrix[pos - distFromPos, column] |= matrix[row, column];
                     }
                 }
             }
