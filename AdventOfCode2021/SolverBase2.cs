@@ -13,14 +13,14 @@ namespace AdventOfCode2021
         public virtual async Task SolveSampleAsync()
         {
             Console.WriteLine("Sample:");
-            await SolveAsync(async () => await InputReader.ReadStringArrayAsync($"Day{DayNo}/sample.txt"));
+            await SolveAsync(async () => await InputReader.ReadStringArrayAsync($"../../../Day{DayNo}/sample.txt"));
         }
 
         [Benchmark]
         public virtual async Task SolvePersonalAsync()
         {
             Console.WriteLine("Personal:");
-            await SolveAsync(async () => await InputReader.ReadStringArrayAsync($"Day{DayNo}/personal.txt"));
+            await SolveAsync(async () => await InputReader.ReadStringArrayAsync($"../../../Day{DayNo}/personal.txt"));
         }
 
         private async Task SolveAsync(Func<Task<string[]>> inputFunc)
