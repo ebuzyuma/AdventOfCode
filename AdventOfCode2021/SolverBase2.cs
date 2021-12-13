@@ -1,7 +1,11 @@
 ﻿using AdventOfCode2021.Utils;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Engines;
 
 namespace AdventOfCode2021
 {
+    [SimpleJob(RunStrategy.Monitoring)]
+    [MinColumn, MaxColumn, MeanColumn, MedianColumn]
     public abstract class SolverBase2
     {
         protected abstract string DayNo { get; }
@@ -12,6 +16,7 @@ namespace AdventOfCode2021
             await SolveAsync(async () => await InputReader.ReadStringArrayAsync($"Day{DayNo}/sample.txt"));
         }
 
+        [Benchmark]
         public virtual async Task SolvePersonalAsync()
         {
             Console.WriteLine("Personal:");
