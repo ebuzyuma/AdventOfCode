@@ -8,13 +8,13 @@ namespace AdventOfCode2020
 
         public virtual async Task<string> SolveSampleAsync()
         {
-            var input = await InputReader.ReadStringArrayAsync($"Day{DayNo}/sample.txt");
+            var input = await InputReader.ReadStringArrayAsync($"../../../Day{DayNo}/sample.txt");
             return Solve(input);
         }
 
         public virtual async Task<string> SolvePersonalAsync()
         {
-            var input = await InputReader.ReadStringArrayAsync($"Day{DayNo}/personal.txt");
+            var input = await InputReader.ReadStringArrayAsync($"../../../Day{DayNo}/personal.txt");
             return Solve(input);
         }
 
