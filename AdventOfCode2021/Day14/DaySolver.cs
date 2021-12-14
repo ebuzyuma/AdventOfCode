@@ -15,7 +15,7 @@ namespace AdventOfCode2021.Day14
 
             // Part 1
             var result = BuildPolymer(polymer, rules, 10);
-            var group = result.AsEnumerable().GroupBy(x => x).ToDictionary(x => x.Key, x => x.LongCount());
+            var group = result.OrderBy(x => x).GroupBy(x => x).ToDictionary(x => x.Key, x => x.LongCount());
             var min = group.Min(x => x.Value);
             var max = group.Max(x => x.Value);
             var part1 = max - min;
@@ -35,9 +35,9 @@ namespace AdventOfCode2021.Day14
             // build cache for all rules for half of iterations
             // Count for half of iterations from polymer and for the other half from cache
 
-            var alphabet = rules.Values.Select(x => x[0]).Union(polymer).Distinct();
+            var alphabet = rules.Values.Select(x => x[0]).Union(polymer).Distinct().OrderBy(x => x);
             var histogram = alphabet.ToDictionary(k => k, v => 0L);
-            
+
             // Build cache
             var rulesHistograms = new Dictionary<string, Dictionary<char, long>>();
             foreach (var rule in rules)
@@ -47,25 +47,24 @@ namespace AdventOfCode2021.Day14
                 rulesHistograms[rule.Key] = ruleHistogram;
             }
 
-            // COunt for half of iterations
+            // Count for half of iterations
             ItemsOfPolymer.Clear();
             for (int i = 0; i < polymer.Length - 1; i++)
             {
+                histogram[polymer[i]]++;
                 Count(polymer[i], polymer[i + 1], 0, iterations / 2, histogram, rules);
             }
+            histogram[polymer.Last()]++;
 
             // Count the rest from cache 
-            foreach (var left in ItemsOfPolymer)
+            foreach (var pair in ItemsOfPolymer)
             {
-                var key = rulesHistograms[$"{left.Item1}{left.Item2}"];
-                foreach (var item in key)
+                var ruleHistogram = rulesHistograms[$"{pair.left}{pair.right}"];
+                foreach (var item in ruleHistogram)
                 {
                     histogram[item.Key] += item.Value;
                 }
             }
-
-            histogram[polymer.First()]++;
-            histogram[polymer.Last()]++;
 
             return histogram;
         }
@@ -90,7 +89,7 @@ namespace AdventOfCode2021.Day14
             return polymer;
         }
 
-        private List<(char, char)> ItemsOfPolymer = new List<(char, char)>();
+        private List<(char left, char right)> ItemsOfPolymer = new List<(char, char)>();
 
         private void Count(char a, char b, int iteration, int maxIterations,
             Dictionary<char, long> values,
@@ -110,5 +109,4 @@ namespace AdventOfCode2021.Day14
             }
         }
     }
-
 }
