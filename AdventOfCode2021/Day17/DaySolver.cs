@@ -59,8 +59,7 @@
         private List<int> FindY(List<int> yRange)
         {
             var result = new List<int>();
-            var exit = false;
-            for (int y0 = yRange[0]; y0 < Math.Abs(yRange[0]) * 2; y0++)
+            for (int y0 = yRange[0]; y0 <= Math.Abs(yRange[0]); y0++)
             {
                 var yVelocity = y0;
                 var y = 0;
@@ -112,5 +111,4 @@
             return pos.y < yRange[0] || pos.x > xRange[1];
         }
     }
-
 }
