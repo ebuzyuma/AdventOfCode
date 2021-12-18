@@ -13,95 +13,60 @@ namespace AdventOfCode2021.Day18
             var total = nodes[0];
             for (int i = 1; i < nodes.Count; i++)
             {
-                var sum = new AdditionNode();
-                sum.Left = total;
-                total.Parent = sum;
-
-                sum.Right = nodes[i];
-                nodes[i].Parent = sum;
-                Reduce(sum);
-                total = sum;
+                total = Sum(total, nodes[i]);
             }
-            var magnitude = Magnitude(total);
 
             // Part 2
             var sums = new List<long>();
-            for (int i = 0; i < nodes.Count; i++)
+            for (int i = 0; i < input.Length; i++)
             {
-                for (int j = i + 1; j < nodes.Count; j++)
+                for (int j = i + 1; j < input.Length; j++)
                 {
-                    var sum = new AdditionNode();
-                    sum.Left = BuildTree(input[i]);
-                    sum.Left.Parent = sum;
+                    // Build tree every time to create a copy
+                    var leftRightSum = Sum(BuildTree(input[i]), BuildTree(input[j]));
+                    sums.Add(leftRightSum.Magnitude);
 
-                    sum.Right = BuildTree(input[j]);
-                    sum.Right.Parent = sum;
-                    Reduce(sum);
-                    sums.Add(Magnitude(sum));
-
-                    nodes = input.Select(x => BuildTree(x)).ToList();
-
-                    sum = new AdditionNode();
-                    sum.Left = BuildTree(input[j]);
-                    sum.Left.Parent = sum;
-
-                    sum.Right = BuildTree(input[i]);
-                    sum.Right.Parent = sum;
-                    Reduce(sum);
-                    sums.Add(Magnitude(sum));
+                    var rightLeftSum = Sum(BuildTree(input[j]), BuildTree(input[i]));
+                    sums.Add(rightLeftSum.Magnitude);
                 }
             }
 
-            return (magnitude.ToString(), sums.Max().ToString());
+            return (total.Magnitude.ToString(), sums.Max().ToString());
         }
 
-        private long Magnitude(Node root)
+        private Node Sum(Node left, Node right)
         {
-            if (root is ValueNode value)
-            {
-                return value.Value;
-            }
-            else if (root is AdditionNode addition)
-            {
-                return 3 * Magnitude(addition.Left) + 2 * Magnitude(addition.Right);
-            }
-
-            throw new NotImplementedException();
+            var sum = new AdditionNode(left, right);
+            Reduce(sum);
+            return sum;
         }
 
         private void Reduce(AdditionNode root)
         {
-            bool hasReduce = true;
-            while (hasReduce)
-            {
-                hasReduce = false;
-                var tooNestedPair = TooNestedPair(root);
-                if (tooNestedPair != null)
-                {
-                    Explode(tooNestedPair);
-                    hasReduce = true;
-                }
-                else
-                {
-                    var bigNumber = GetBigNode(root);
-                    if (bigNumber != null)
-                    {
-                        Split(bigNumber);
-                        hasReduce = true;
-                    }
-                }
-            }
+            while (TryExplode(root) || TrySplit(root));
         }
 
-        private void Split(ValueNode bigNumber)
+        private bool TrySplit(Node root)
         {
-            var parent = bigNumber.Parent as AdditionNode;
-            var newPair = new AdditionNode { Parent = bigNumber.Parent };
-            var by2 = bigNumber.Value / 2.0;
-            newPair.Left = new ValueNode { Value = (int)Math.Floor(by2), Parent = newPair };
-            newPair.Right = new ValueNode { Value = (int)Math.Ceiling(by2), Parent = newPair };
+            var splitNode = GetSplitNode(root, 10);
+            if (splitNode != null)
+            {
+                Split(splitNode);
+                return true;
+            }
 
-            if (parent.Left == bigNumber)
+            return false;
+        }
+
+        private void Split(ValueNode node)
+        {
+            var devidedBy2 = node.Value / 2.0;
+            var left = new ValueNode((int)Math.Floor(devidedBy2));
+            var right = new ValueNode((int)Math.Ceiling(devidedBy2));
+            var newPair = new AdditionNode(left, right, node.Parent);
+
+            var parent = (AdditionNode)node.Parent;
+            if (parent.Left == node)
             {
                 parent.Left = newPair;
             }
@@ -111,19 +76,31 @@ namespace AdventOfCode2021.Day18
             }
         }
 
-        private ValueNode? GetBigNode(Node root)
+        private ValueNode? GetSplitNode(Node root, int minValue)
         {
             if (root is ValueNode value)
             {
-                return value.Value >= 10 ? value : null;
+                return value.Value >= minValue ? value : null;
             }
 
             else if (root is AdditionNode addition)
             {
-                return GetBigNode(addition.Left) ?? GetBigNode(addition.Right);
+                return GetSplitNode(addition.Left, minValue) ?? GetSplitNode(addition.Right, minValue);
             }
 
             throw new NotImplementedException();
+        }
+
+        private bool TryExplode(Node root)
+        {
+            var tooNestedPair = NestedPair(root, 4);
+            if (tooNestedPair != null)
+            {
+                Explode(tooNestedPair);
+                return true;
+            }
+
+            return false;
         }
 
         private void Explode(AdditionNode explode)
@@ -143,11 +120,11 @@ namespace AdventOfCode2021.Day18
             var parent = explode.Parent as AdditionNode;
             if (parent.Left == explode)
             {
-                parent.Left = new ValueNode { Value = 0, Parent = parent };
+                parent.Left = new ValueNode(0, parent);
             }
             else
             {
-                parent.Right = new ValueNode { Value = 0, Parent = parent };
+                parent.Right = new ValueNode(0, parent);
             }
         }
 
@@ -197,7 +174,7 @@ namespace AdventOfCode2021.Day18
             }
         }
 
-        private AdditionNode? TooNestedPair(Node root, int nestLevel = 0)
+        private AdditionNode? NestedPair(Node root, int maxNesting, int nestLevel = 0)
         {
             if (root is ValueNode)
             {
@@ -205,28 +182,29 @@ namespace AdventOfCode2021.Day18
             }
             else if (root is AdditionNode addition)
             {
-                if (nestLevel == 4)
+                if (nestLevel == maxNesting)
                 {
                     return addition;
                 }
 
-                return TooNestedPair(addition.Left, nestLevel + 1) ?? TooNestedPair(addition.Right, nestLevel + 1);
+                return NestedPair(addition.Left, maxNesting, nestLevel + 1) 
+                    ?? NestedPair(addition.Right, maxNesting, nestLevel + 1);
             }
 
             throw new NotImplementedException();
         }
 
-        private Node BuildTree(string number, Node? parent = null)
+        private Node BuildTree(string number)
         {
             if (Regex.IsMatch(number, @"^\d$"))
             {
-                return new ValueNode { Value = int.Parse(number), Parent = parent };
+                return new ValueNode(int.Parse(number));
             }
 
-            var node = new AdditionNode { Parent = parent };
-            (var left, var right) = Split(number);
-            node.Left = BuildTree(left, node);
-            node.Right = BuildTree(right, node);
+            (var leftStr, var rightStr) = Split(number);
+            var left = BuildTree(leftStr);
+            var right = BuildTree(rightStr);
+            var node = new AdditionNode(left, right);
             return node;
         }
 
@@ -249,12 +227,22 @@ namespace AdventOfCode2021.Day18
 
         private abstract class Node
         {
-            public Node? Parent { get; set; }
+            public Node Parent { get; set; }
+
+            public abstract long Magnitude { get; }
         }
 
         private class ValueNode : Node
         {
             public int Value { get; set; }
+
+            public override long Magnitude => Value;
+
+            public ValueNode(int value, Node? parent = null)
+            {
+                Value = value;
+                Parent = parent;
+            }
 
             public override string ToString()
             {
@@ -267,6 +255,17 @@ namespace AdventOfCode2021.Day18
             public Node Left { get; set; }
 
             public Node Right { get; set; }
+
+            public override long Magnitude => 3 * Left.Magnitude + 2 * Right.Magnitude;
+
+            public AdditionNode(Node left, Node right, Node parent = null)
+            {
+                Parent = parent;
+                Left = left;
+                left.Parent = this;
+                Right = right;
+                right.Parent = this;
+            }
 
             public override string ToString()
             {
