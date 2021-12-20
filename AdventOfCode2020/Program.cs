@@ -1,4 +1,4 @@
-﻿using AdventOfCode2020.Day23;
+﻿using AdventOfCode2020.Day24;
 
 var solver = new DaySolver();
 
