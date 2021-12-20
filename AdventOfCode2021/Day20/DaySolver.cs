@@ -20,7 +20,7 @@ namespace AdventOfCode2021.Day20
             //Print(image);
 
             int part1 = 0;
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 50; i++)
             {
                 image = Apply(image, code);
                 //Print(image);
