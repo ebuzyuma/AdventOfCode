@@ -245,9 +245,9 @@ namespace AdventOfCode2021.Day19
 
             public void Rotate(ScannerOrientation scanner)
             {
-                var xRotation = scanner.XRotation - Orientation.XRotation;
-                var yRotation = scanner.YRotation - Orientation.YRotation;
-                var zRotation = scanner.ZRotation - Orientation.ZRotation;
+                var xRotation = (360 + scanner.XRotation - Orientation.XRotation) % 360;
+                var yRotation = (360 + scanner.YRotation - Orientation.YRotation) % 360;
+                var zRotation = (360 + scanner.ZRotation - Orientation.ZRotation) % 360;
 
                 Orientation = scanner.Clone();
 
