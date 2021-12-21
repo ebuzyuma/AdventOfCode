@@ -11,6 +11,8 @@
             var player1PositionIndex = long.Parse(input[0].Split(": ")[1]) - 1;
             var player2PositionIndex = long.Parse(input[1].Split(": ")[1]) - 1;
 
+            // player number is not important, hence it's always turn of player 1
+
             // Part 1
             var dice = new DetermenisticDice();
             var player1 = new Player(player1PositionIndex, 0);
@@ -22,14 +24,8 @@
 
 
             // Part 2
-            var universe = new Universe 
-            { 
-                Player1 = new Player(player1PositionIndex, 0),
-                Player2 = new Player(player2PositionIndex, 0),
-                IsPlayer1Turn = true,
-            };
-            var wins = CountWins(universe);            
-
+            var universe = new Universe(new Player(player1PositionIndex, 0), new Player(player2PositionIndex, 0));
+            var wins = CountWins(universe);
             var part2 = Math.Max(wins.player1, wins.player2);
 
             return (part1.ToString(), part2.ToString());
@@ -50,30 +46,18 @@
             // Iterate over all possible sums
             foreach (var value in dice.Values)
             {
-                var player = universe.IsPlayer1Turn ? universe.Player1.Clone() : universe.Player2.Clone();
+                var player = universe.Player1.Clone();
                 player.Move(value);
 
                 if (player.TotalScore >= 21)
                 {
-                    if (universe.IsPlayer1Turn)
-                    {
-                        result = (result.player1 + 1, result.player2);
-                    }
-                    else
-                    {
-                        result = (result.player1, result.player2 + 1);
-                    }
+                    result = (result.player1 + 1, result.player2);
                 }
                 else
                 {
-                    var newU = new Universe
-                    {
-                        Player1 = universe.IsPlayer1Turn ? player : universe.Player1.Clone(),
-                        Player2 = universe.IsPlayer1Turn ? universe.Player2.Clone() : player,
-                        IsPlayer1Turn = !universe.IsPlayer1Turn
-                    };
-                    var subResult = CountWins(newU);
-                    result = (result.player1 + subResult.player1, result.player2 + subResult.player2);
+                    var newUniverse = new Universe(universe.Player2.Clone(), player); // Swap player for move of player 2 
+                    var subResult = CountWins(newUniverse);
+                    result = (result.player1 + subResult.player2, result.player2 + subResult.player1); // swap sum of subresult as well
                 }
             }
 
@@ -87,13 +71,15 @@
 
             public Player Player2 { get; set; }
 
-            public bool IsPlayer1Turn { get; set; }
-
-            public bool IsPlayer1Won { get; set; }
+            public Universe(Player player1, Player player2)
+            {
+                Player1 = player1;
+                Player2 = player2;
+            }
 
             public override string ToString()
             {
-                return $"{Player1}, {Player2} - Player {(IsPlayer1Turn ? '1' : '2')} turn";
+                return $"{Player1}, {Player2}";
             }
         }
 
@@ -123,13 +109,7 @@
                 var sum = dice.Throw() + dice.Throw() + dice.Throw();
                 player1.Move(sum);
 
-                if (player1.TotalScore >= maxScore)
-                {
-                    break;
-                }
-
-                sum = dice.Throw() + dice.Throw() + dice.Throw();
-                player2.Move(sum);
+                (player1, player2) = (player2, player1);
             }
         }
 
@@ -188,5 +168,4 @@
             }
         }
     }
-
 }
