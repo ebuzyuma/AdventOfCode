@@ -6,7 +6,7 @@
 
         private static readonly HashSet<int> HallwayRoomsIndexes = new HashSet<int> { 2, 4, 6, 8 };
         private static readonly Dictionary<char, long> Costs = new Dictionary<char, long> { { 'A', 1 }, { 'B', 10 }, { 'C', 100 }, { 'D', 1000 } };
-        private static readonly Dictionary<char, int> ExpectedPositions = new Dictionary<char, int> { { 'A', 0 }, { 'B', 1 }, { 'C', 2 }, { 'D', 3 }, { '.', -1 } };
+        private static readonly Dictionary<char, int> ExpectedRooms = new Dictionary<char, int> { { 'A', 0 }, { 'B', 1 }, { 'C', 2 }, { 'D', 3 }, { '.', -1 } };
 
         protected override (string, string) Solve(string[] input)
         {
@@ -14,13 +14,19 @@
             var hallway = Enumerable.Repeat('.', input[1].Length - 2).ToArray();
             var amphipodsTopLevel = input[2].Trim().Replace("#", string.Empty).ToArray();
             var amphipodsBottomLevel = input[3].Trim().Replace("#", string.Empty).ToArray();
-            var initState = new BurrowState(hallway, amphipodsTopLevel, amphipodsBottomLevel);
 
-            var minBurrow = RotateToProperState(initState);
+            // Part 1
+            var initState1 = new BurrowState(hallway, new[] { amphipodsTopLevel, amphipodsBottomLevel });
+            var minBurrow1 = RotateToProperState(initState1);
 
-            ReplayMoves(initState, minBurrow.Moves);
+            // Part 2
+            var middle1 = new[] { 'D', 'C', 'B', 'A' };
+            var middle2 = new[] { 'D', 'B', 'A', 'C' };
+            var initState2 = new BurrowState(hallway, new[] { amphipodsTopLevel, middle1, middle2, amphipodsBottomLevel });
+            var minBurrow2 = RotateToProperState(initState2);
 
-            return (minBurrow.TotalCost.ToString(), "".ToString());
+
+            return (minBurrow1.TotalCost.ToString(), minBurrow2.TotalCost.ToString());
         }
 
         private long currentMin = long.MaxValue;
@@ -54,7 +60,7 @@
                     continue;
                 }
 
-                clone = RotateToProperState(clone);
+                clone = RotateToProperState(clone);                
                 if (clone != null && (min == null || clone.TotalCost < min.TotalCost))
                 {
                     min = clone;
@@ -64,20 +70,24 @@
                 //burrow.Print();
             }
 
-            //endStateCache[burrow.Key] = min;
+            // cache does not work becuase we should merge initial steps to get accurate total score
+            // endStateCache[burrow.Key] = min;
 
             return min;
         }
 
         private void ReplayMoves(BurrowState burrow, List<Move> moves)
         {
-            burrow.Print();
             var clone = burrow.Clone();
             foreach (var move in moves)
             {
-                clone.Move(move);
+                Console.WriteLine(clone.TotalCost);
                 clone.Print();
+                Console.WriteLine(move);
+                clone.Move(move);
             }
+
+            clone.Print();
         }
 
         private static int ConvertRoomIndexToHallway(int room) => room * 2 + 2;
@@ -85,23 +95,22 @@
         public class BurrowState
         {
             public char[] Hallway { get; set; }
-            public char[] AmphipodsTopLevel { get; set; }
-            public char[] AmphipodsBottomLevel { get; set; }
+            public char[][] Levels { get; set; }
             public long TotalCost { get; set; }
             public List<Move> Moves { get; set; } = new List<Move>();
 
-            public string Key => $"{string.Join("", Hallway)}|{string.Join("", AmphipodsTopLevel)}|{string.Join("", AmphipodsBottomLevel)}";
+            public string Key => $"{string.Join("", Hallway)}\n" +
+                $"  {string.Join("  \n  ", Levels.Select(x => string.Join(" ", x)))}  ";
 
-            public BurrowState(char[] hallway, char[] amphipodsTopLevel, char[] amphipodsBottomLevel)
+            public BurrowState(char[] hallway, char[][] levels)
             {
                 Hallway = hallway;
-                AmphipodsTopLevel = amphipodsTopLevel;
-                AmphipodsBottomLevel = amphipodsBottomLevel;
+                Levels = levels;
             }
 
             public BurrowState Clone()
             {
-                var clone = new BurrowState(Hallway.ToArray(), AmphipodsTopLevel.ToArray(), AmphipodsBottomLevel.ToArray());
+                var clone = new BurrowState(Hallway.ToArray(), Levels.Select(x => x.ToArray()).ToArray());
                 clone.TotalCost = TotalCost;
                 clone.Moves = Moves.ToList();
                 return clone;
@@ -109,13 +118,12 @@
 
             public bool IsFinalPosition()
             {
-                return Enumerable.Range(0, AmphipodsBottomLevel.Length)
-                    .All(i => IsOnRightPosition(i, AmphipodsTopLevel) && IsOnRightPosition(i, AmphipodsBottomLevel));
+                return Levels.All(lvl => Enumerable.Range(0, lvl.Length).All(i => IsOnRightPosition(i, lvl)));
             }
 
             private bool IsOnRightPosition(int pos, char[] level)
             {
-                return ExpectedPositions[level[pos]] == pos;
+                return ExpectedRooms[level[pos]] == pos;
             }
 
             private bool IsEmptyPosition(int pos, char[] level) => level[pos] == '.';
@@ -125,8 +133,10 @@
             {
                 Console.WriteLine(string.Join("", Enumerable.Repeat('#', Hallway.Length + 2)));
                 Console.WriteLine($"#{string.Join("", Hallway)}#");
-                Console.WriteLine($"###{string.Join("#", AmphipodsTopLevel)}###");
-                Console.WriteLine($"  #{string.Join("#", AmphipodsBottomLevel)}#  ");
+                for (int i = 0; i < Levels.Length; i++)
+                {
+                    Console.WriteLine($"{(i == 0 ? "##" : "  ")}#{string.Join("#", Levels[i])}#{(i == 0 ? "##" : "  ")}");
+                }
                 Console.WriteLine($"  #########  ");
             }
 
@@ -138,69 +148,80 @@
                     if (IsEmptyPosition(i, Hallway)) continue;
 
                     var amphipod = Hallway[i];
-                    var expectedPosition = ExpectedPositions[amphipod];
-                    if (IsCleanHallway(i, ConvertRoomIndexToHallway(expectedPosition), i)
-                        && IsEmptyPosition(expectedPosition, AmphipodsTopLevel)
-                        && (IsEmptyPosition(expectedPosition, AmphipodsBottomLevel) || IsOnRightPosition(expectedPosition, AmphipodsBottomLevel)))
+                    var expectedRoom = ExpectedRooms[amphipod];
+                    if (IsCleanHallway(i, ConvertRoomIndexToHallway(expectedRoom), i)
+                        && IsRoomAvailable(amphipod, expectedRoom, out var destinationLevel))
                     {
-                        var destination = AmphipodsBottomLevel[expectedPosition] == amphipod ? SourceType.TopLevel : SourceType.BottomLevel;
-                        moves.Add(new Move(amphipod, i, SourceType.Hallway, expectedPosition, destination));
+                        moves.Add(new Move(amphipod, i, -1, expectedRoom, destinationLevel.Value));
                     }
                 }
 
-                for (int i = 0; i < AmphipodsTopLevel.Length; i++)
+                for (int i = 0; i < Levels[0].Length; i++)
                 {
-                    if (IsEmptyPosition(i, AmphipodsTopLevel)
-                        || (IsOnRightPosition(i, AmphipodsTopLevel) && IsOnRightPosition(i, AmphipodsBottomLevel)))
+                    // iterate over rooms
+                    int currentLevel = 0;
+                    while (currentLevel < Levels.Length && IsEmptyPosition(i, Levels[currentLevel])) currentLevel++;
+                    if (currentLevel == Levels.Length)
                     {
+                        // room is empty at all
                         continue;
                     }
 
-                    var amphipod = AmphipodsTopLevel[i];
-                    var expectedPosition = ExpectedPositions[amphipod];
-                    if (IsCleanHallway(ConvertRoomIndexToHallway(i), ConvertRoomIndexToHallway(expectedPosition))
-                        && IsEmptyPosition(expectedPosition, AmphipodsTopLevel)
-                        && (IsEmptyPosition(expectedPosition, AmphipodsBottomLevel) || IsOnRightPosition(expectedPosition, AmphipodsBottomLevel)))
+                    var amphipod = Levels[currentLevel][i];
+                    var expectedRoom = ExpectedRooms[amphipod];
+                    if (i == expectedRoom && IsRoomFilledWithProperAmphipods(amphipod, expectedRoom))
                     {
-                        var destination = IsEmptyPosition(expectedPosition, AmphipodsBottomLevel) ? SourceType.BottomLevel : SourceType.TopLevel;
-                        moves.Add(new Move(amphipod, i, SourceType.TopLevel, expectedPosition, destination));
+                        continue;
+                    }
+                    else if (IsCleanHallway(ConvertRoomIndexToHallway(i), ConvertRoomIndexToHallway(expectedRoom))
+                        && IsRoomAvailable(amphipod, expectedRoom, out var destinationLevel))
+                    {
+                        // we could move directly
+                        moves.Add(new Move(amphipod, i, currentLevel, expectedRoom, destinationLevel.Value));
                     }
                     else
                     {
                         var possible = PossibleHallwayPositions(ConvertRoomIndexToHallway(i))
-                            .Select(x => new Move(amphipod, i, SourceType.TopLevel, x, SourceType.Hallway))
-                            .ToList();
-                        moves.AddRange(possible);
-                    }
-                }
-
-                for (int i = 0; i < AmphipodsBottomLevel.Length; i++)
-                {
-                    if (IsEmptyPosition(i, AmphipodsBottomLevel) || IsOnRightPosition(i, AmphipodsBottomLevel)) continue;
-
-                    var amphipod = AmphipodsBottomLevel[i];
-                    var expectedPosition = ExpectedPositions[amphipod];
-                    if (!IsEmptyPosition(i, AmphipodsTopLevel))
-                    {
-                        continue;
-                    }
-                    else if (IsCleanHallway(ConvertRoomIndexToHallway(i), ConvertRoomIndexToHallway(expectedPosition))
-                        && IsEmptyPosition(expectedPosition, AmphipodsTopLevel)
-                        && (IsEmptyPosition(expectedPosition, AmphipodsBottomLevel) || IsOnRightPosition(expectedPosition, AmphipodsBottomLevel)))
-                    {
-                        var destination = IsEmptyPosition(expectedPosition, AmphipodsBottomLevel) ? SourceType.BottomLevel : SourceType.TopLevel;
-                        moves.Add(new Move(amphipod, i, SourceType.BottomLevel, expectedPosition, destination));
-                    }
-                    else
-                    {
-                        var possible = PossibleHallwayPositions(ConvertRoomIndexToHallway(i))
-                            .Select(x => new Move(amphipod, i, SourceType.BottomLevel, x, SourceType.Hallway))
+                            .Select(x => new Move(amphipod, i, currentLevel, x, -1))
                             .ToList();
                         moves.AddRange(possible);
                     }
                 }
 
                 return moves;
+            }
+
+            private bool IsRoomFilledWithProperAmphipods(char amphibot, int room)
+            {
+                return Levels.Select(x => x[room]).All(a => a == '.' || a == amphibot);
+            }
+
+            private bool IsRoomAvailable(char amphipod, int room, out int? level)
+            {
+                level = null;
+                var expectedChar = amphipod;
+
+                for (int currentLevel = Levels.Length - 1; currentLevel >= 0; currentLevel--)
+                {
+                    if (Levels[currentLevel][room] == expectedChar)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        if (Levels[currentLevel][room] == '.')
+                        {
+                            expectedChar = '.';
+                            level = currentLevel;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return level.HasValue;
             }
 
             private List<int> PossibleHallwayPositions(int startHallwayPos)
@@ -233,30 +254,22 @@
             {
                 Moves.Add(move);
                 TotalCost += Costs[move.Amphipod] * move.Steps();
-                if (move.From == SourceType.TopLevel)
-                {
-                    AmphipodsTopLevel[move.FromPos] = '.';
-                }
-                else if (move.From == SourceType.BottomLevel)
-                {
-                    AmphipodsBottomLevel[move.FromPos] = '.';
-                }
-                else
+                if (move.FromLevel == -1)
                 {
                     Hallway[move.FromPos] = '.';
                 }
-
-                if (move.To == SourceType.TopLevel)
+                else
                 {
-                    AmphipodsTopLevel[move.ToPos] = move.Amphipod;
+                    Levels[move.FromLevel][move.FromPos] = '.';
                 }
-                else if (move.To == SourceType.BottomLevel)
+
+                if (move.ToLevel == -1)
                 {
-                    AmphipodsBottomLevel[move.ToPos] = move.Amphipod;
+                    Hallway[move.ToPos] = move.Amphipod;
                 }
                 else
                 {
-                    Hallway[move.ToPos] = move.Amphipod;
+                    Levels[move.ToLevel][move.ToPos] = move.Amphipod;
                 }
             }
 
@@ -285,34 +298,36 @@
         {
             public char Amphipod { get; set; }
             public int FromPos { get; set; }
-            public SourceType From { get; set; }
+            public int FromLevel { get; set; }
             public int ToPos { get; set; }
-            public SourceType To { get; set; }
+            public int ToLevel { get; set; }
 
-            public Move(char amphipod, int fromPos, SourceType from, int toPos, SourceType to)
+            public Move(char amphipod, int fromPos, int fromLevel, int toPos, int toLevel)
             {
                 this.Amphipod = amphipod;
                 this.FromPos = fromPos;
-                this.From = from;
+                this.FromLevel = fromLevel;
                 this.ToPos = toPos;
-                this.To = to;
+                this.ToLevel = toLevel;
             }
 
             public override string ToString()
             {
-                return $"{Amphipod} from {FromPos} {From} to {ToPos} {To}";
+                string fromStr = FromLevel == -1 ? "Hallway" : $"Level{FromLevel}";
+                string toStr = ToLevel == -1 ? "Hallway" : $"Level{ToLevel}";
+                return $"{Amphipod} from {FromPos} {fromStr} to {ToPos} {toStr}";
             }
 
             public int Steps()
             {
                 int result = 0;
-                result += Math.Abs(From - SourceType.Hallway);
-                result += Math.Abs(SourceType.Hallway - To);
-                if (From == SourceType.Hallway)
+                result += FromLevel + 1;
+                result += ToLevel + 1;
+                if (FromLevel == -1)
                 {
                     result += Math.Abs(FromPos - ConvertRoomIndexToHallway(ToPos));
                 }
-                else if (To == SourceType.Hallway)
+                else if (ToLevel == -1)
                 {
                     result += Math.Abs(ToPos - ConvertRoomIndexToHallway(FromPos));
                 }
@@ -324,8 +339,5 @@
                 return result;
             }
         }
-
-
     }
-
 }
