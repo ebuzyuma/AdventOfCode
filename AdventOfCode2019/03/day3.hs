@@ -1,8 +1,7 @@
 import Data.List (elemIndex)
 import Data.Maybe (isNothing, catMaybes)
 import Input (wire1, wire2)
-
---import qualified Data.HashSet as HashSet
+import qualified Data.Map as M
 
 move :: (Integral a) => (a, a) -> (Char, a) -> [(a, a)]
 move (x, y) (dir, steps)
@@ -16,7 +15,7 @@ pathPoints :: Integral a => (a, a) -> [(Char, a)] -> [(a, a)]
 pathPoints _ [] = []
 pathPoints pos (x : xs) = let path = move pos x in path ++ pathPoints (last path) xs
 
-fullPath x = (0,0) : pathPoints (0,0) x
+fullPath x = M.fromListWith min . flip zip [1 ..] $ pathPoints (0, 0) x
 
 wire1Path = fullPath wire1
 
@@ -27,18 +26,13 @@ intersect [] _ = []
 intersect _ [] = []
 intersect xs ys = filter (`elem` xs) ys
 
-intersection = wire1Path `intersect` wire2Path
+intersection = foldr1 M.intersection [wire1Path, wire2Path]
 
 manhattanDistance (x, y) = abs x + abs y
 
-part1 = minimum [manhattanDistance p | p <- intersection, p /= (0, 0)]
+part1 = minimum . map manhattanDistance . M.keys $ M.intersection wire1Path wire2Path
 
-timingDistance pos = sum (catMaybes [pos1, pos2])
-  where
-    pos1 = elemIndex pos wire1Path
-    pos2 = elemIndex pos wire2Path
-
-part2 = minimum [timingDistance p | p <- intersection, p /= (0,0)]
+part2 = minimum . M.elems $ M.intersectionWith (+) wire1Path wire2Path
 
 main = do
   print intersection
