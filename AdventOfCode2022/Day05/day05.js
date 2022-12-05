@@ -2,7 +2,7 @@ const fs = require("fs");
 const data = fs.readFileSync("Day05/input.txt", "utf8");
 const lines = data.split("\n").map((x) => x.trim());
 
-let stacks = [
+let stacksInput = [
   "",
   "QWPSZRHD",
   "VBRWQHF",
@@ -24,22 +24,39 @@ i++;
 let moves = [];
 for (; i < lines.length; i++) {
   const split = lines[i].split(" ");
-  const move = +split[1];
+  const quantity = +split[1];
   const from = +split[3];
   const to = +split[5];
-  moves.push({ move, from, to });
+  moves.push({ quantity, from, to });
 }
 
+// part 1
+const moveByOne = (stacks, move) => {
+  for (let k = 0; k < move.quantity; k++) {
+    const crate = stacks[move.from].pop();
+    stacks[move.to].push(crate);
+  }
+};
+
+const stacks1 = stacksInput.map((x) => [...x]);
 for (let i = 0; i < moves.length; i++) {
-  const move = moves[i];
-  const crack = stacks[move.from].splice(stacks[move.from].length - move.move);
-  stacks[move.to] = [...stacks[move.to], ...crack];
-  //for (let k = 0; k < move.move; k++) {
-  //const crack = stacks[move.from].pop();
-  //stacks[move.to].push(crack);
-  //}
+  moveByOne(stacks1, moves[i]);
 }
 
-const result = stacks.map((x) => x[x.length - 1]).join("");
+const part1 = stacks1.map((x) => x[x.length - 1]).join("");
+console.log(part1);
 
-console.log(result);
+
+// part 2
+const moveByAll = (stacks, move) => {
+  const crates = stacks[move.from].splice(stacks[move.from].length - move.quantity);
+  stacks[move.to] = [...stacks[move.to], ...crates];
+};
+
+const stacks2 = stacksInput.map((x) => [...x]);
+for (let i = 0; i < moves.length; i++) {
+  moveByAll(stacks2, moves[i]);
+}
+
+const part2 = stacks2.map((x) => x[x.length - 1]).join("");
+console.log(part2);
