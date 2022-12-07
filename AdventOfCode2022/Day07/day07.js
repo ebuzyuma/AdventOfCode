@@ -12,31 +12,25 @@ for (let i = 0; i < lines.length; i++) {
     } else if (cd === "..") {
       currentDir = currentDir.parent;
     } else {
-      currentDir.folders[cd] = currentDir.folders[cd] || {
-        parent: currentDir,
-        name: cd,
-        folders: {},
-        files: [],
-      };
       currentDir = currentDir.folders[cd];
     }
   } else if (line.startsWith("dir")) {
     const dir = line.split(" ")[1];
     currentDir.folders[dir] = { parent: currentDir, name: dir, folders: {}, files: [] };
-  } else if (line !== "$ ls") {
+  } else if (line !== "$ ls") { // line with a file 
     const [size, name] = line.split(" ");
     currentDir.files.push({ size: +size, name });
   }
 }
 
 const sizeFolders = (dir, sizeLimit, out = []) => {
-  let dirs = [];
+  let allFolders = [];
   dir.size = 0;
   if (Object.entries(dir.folders).length > 0) {
-    for (const [dirName, value] of Object.entries(dir.folders)) {
-      let subDirs = sizeFolders(value, sizeLimit, out);
+    for (const [_, value] of Object.entries(dir.folders)) {
+      let allSubFolders = sizeFolders(value, sizeLimit, out);
       dir.size += value.size;
-      dirs = [...dirs, ...subDirs];
+      allFolders = [...allFolders, ...allSubFolders];
     }
   }
 
@@ -46,24 +40,24 @@ const sizeFolders = (dir, sizeLimit, out = []) => {
     out.push(dir);
   }
 
-  dirs.push(dir);
-  return dirs;
+  allFolders.push(dir);
+  return allFolders;
 };
 
-const part1 = [];
-const dirs = sizeFolders(root, 100000, part1);
-const sum = part1.reduce((r, v) => r + v.size, 0);
+const limited = [];
+const allFolders = sizeFolders(root, 100000, limited);
+const part1 = limited.reduce((r, v) => r + v.size, 0);
 
-console.log(sum);
+console.log(part1);
 
-const fs = 70000000;
-const r = 30000000;
-const toFree = root.size - (fs - r);
+const fsSize = 70000000;
+const updateSize = 30000000;
+const toFree = root.size - (fsSize - updateSize);
 
-dirs.sort((a, b) => a.size - b.size);
+allFolders.sort((a, b) => a.size - b.size);
 let i = 0;
-while (dirs[i].size < toFree) {
+while (allFolders[i].size < toFree) {
   i++;
 }
 
-console.log(dirs[i]);
+console.log(allFolders[i].size);
