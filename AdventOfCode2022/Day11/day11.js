@@ -1,12 +1,3 @@
-const utils = require("../utils");
-const reminders = [11, 7, 13, 5, 3, 17, 2, 19];
-
-const toReminders = (x) => {
-  let map = {};
-  reminders.forEach((r) => (map[r] = x % r));
-  return map;
-};
-
 const monkeys = [
   {
     items: [57],
@@ -57,6 +48,42 @@ const monkeys = [
     inspected: 0,
   },
 ];
+
+const monkeySeeMonkeyDo = (monkeys, i) => {
+  const monkey = monkeys[i];
+  monkey.items.forEach((x) => {
+    x = monkey.op(x);
+    monkey.inspected++;
+    x = Math.floor(x / 3);
+    let next = monkey.next(x);
+    monkeys[next].items.push(x);
+  });
+  monkey.items = [];
+};
+
+const monkeyBusiness = (monkeys) => {
+  const inspected = monkeys.map((x) => x.inspected);
+  const iSorted = inspected.sort((a, b) => a - b);
+  return iSorted[iSorted.length - 1] * iSorted[iSorted.length - 2];
+};
+
+// Part 1
+for (let i = 0; i < 20; i++) {
+  for (let mi = 0; mi < monkeys.length; mi++) {
+    monkeySeeMonkeyDo(monkeys, mi);
+  }
+}
+
+console.log(monkeyBusiness(monkeys));
+
+// Part 2
+const reminders = [11, 7, 13, 5, 3, 17, 2, 19];
+
+const toReminders = (x) => {
+  let map = {};
+  reminders.forEach((r) => (map[r] = x % r));
+  return map;
+};
 
 const monkeys2 = [
   {
@@ -109,27 +136,23 @@ const monkeys2 = [
   },
 ];
 
-const doMonkey = (mm, i) => {
-  const m = mm[i];
-  m.items.forEach((x) => {
+const monkeySeeMonkeyDo2 = (monkeys, i) => {
+  const monkey = monkeys[i];
+  monkey.items.forEach((x) => {
     for (const [key, value] of Object.entries(x)) {
-      x[key] = m.op(value) % key;
+      x[key] = monkey.op(value) % key;
     }
-
-    m.inspected++;
-    //x = Math.floor(x / 3);
-    let n = m.next(x);
-    mm[n].items.push(x);
+    monkey.inspected++;
+    let n = monkey.next(x);
+    monkeys[n].items.push(x);
   });
-  m.items = [];
+  monkey.items = [];
 };
 
 for (let i = 0; i < 10000; i++) {
-  for (let mi = 0; mi < monkeys.length; mi++) {
-    doMonkey(monkeys2, mi);
+  for (let mi = 0; mi < monkeys2.length; mi++) {
+    monkeySeeMonkeyDo2(monkeys2, mi);
   }
 }
-const b = monkeys2.map((x) => x.inspected);
-const c = b.sort((a, b) => a - b);
-console.log(c);
-console.log(c[7] * c[6]);
+
+console.log(monkeyBusiness(monkeys2));
