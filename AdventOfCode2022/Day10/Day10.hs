@@ -1,21 +1,42 @@
 import Data.List.Split (chunksOf)
+import Data.Bool (bool)
 
-parseAddx line = read (last . words $ line) :: Int
+parseInstruction :: String -> [Int]
+parseInstruction = addition . words
+  where 
+    addition ["noop"] = [0]
+    addition ["addx", count] = [0, read count]
+    addition x = error "invalid input format"
 
-cycleX (x1, _) line = if line == "noop" then (x1, [x1]) else (x1 + parseAddx line, replicate 2 x1)
+parseInstructions :: String -> [Int]
+parseInstructions = scanl (+) 1 . concatMap parseInstruction . lines
 
+signalStrength :: [Int] -> Int -> Int
 signalStrength xs i = i * xs !! (i - 1)
 
-draw xs size i = if abs ((xs !! i) - (i `mod` size)) <= 1 then '█' else ' '
+part1 :: String -> String
+part1 =
+  show 
+    . sum
+    . flip map [20, 60, 100, 140, 180, 220]
+    . signalStrength
+    . parseInstructions
 
+isVisible :: (Ord a, Num a) => a -> a -> Bool
+isVisible index value = abs (value - index) <= 1
+
+part2 :: Int -> String -> String
+part2 size = 
+  unlines 
+    . chunksOf size
+    . map (bool ' ' '█')
+    . zipWith isVisible (cycle [0..size-1])
+    . parseInstructions
+
+main :: IO ()
 main = do
   content <- readFile "input.txt"
-  let cycles = concatMap snd $ scanl cycleX (1, []) (lines content)
 
-  let p = [20, 60, 100, 140, 180, 220]
-  let part1 = sum $ map (signalStrength cycles) p
-  print part1
+  print $ part1 content
 
-  let size = 40
-  let part2 = map (draw cycles size) [0 .. length cycles - 1]
-  putStr $ unlines (chunksOf size part2)
+  putStr $ part2 40 content
