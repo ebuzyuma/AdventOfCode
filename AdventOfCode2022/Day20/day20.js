@@ -13,8 +13,9 @@ function parseInput(lines) {
 }
 
 function solve(initialNumbers, iteration = 1) {
+  let modulo = initialNumbers.length - 1;
   let positions = [...Array(initialNumbers.length)].map((_, i) => i);
-  const numbers = initialNumbers.map((x) => x);
+  const numbers = initialNumbers.map((x) => x % modulo);
   for (let mix = 1; mix <= iteration; mix++) {
     for (let i = 0; i < positions.length; i++) {
       let position = positions[i];
@@ -22,14 +23,14 @@ function solve(initialNumbers, iteration = 1) {
       if (value === 0) continue;
       let newPosition = position + value;
       if (newPosition >= numbers.length) {
-        newPosition = newPosition % (numbers.length - 1);
+        newPosition = newPosition % modulo;
       }
       if (newPosition <= 0) {
-        let whole = Math.ceil(Math.abs(newPosition) / (numbers.length - 1));
-        newPosition += (numbers.length - 1) * whole;
-        if (newPosition === 0) newPosition += numbers.length - 1;
+        newPosition = newPosition % modulo;
+        if (newPosition <= 0) newPosition += modulo;
       }
 
+      // shift
       let [left, right] = [position, newPosition];
       let di = -1;
       if (newPosition < position) {
@@ -42,18 +43,13 @@ function solve(initialNumbers, iteration = 1) {
         }
       }
       positions[i] = newPosition;
-
-      // if (newPosition - position)
-      // console.log(`${value}: ${position} => ${newPosition}: ${newPosition - position}`);
-      // let result = positions.reduce((r, v, i) => { r[v] = numbers[i]; return r; }, []);
-      // console.log(result);
     }
 
-    let result = positions.reduce((r, v, i) => {
-      r[v] = initialNumbers[i];
-      return r;
-    }, []);
-    console.log(result);
+    // let result = positions.reduce((r, v, i) => {
+    //   r[v] = initialNumbers[i];
+    //   return r;
+    // }, []);
+    // console.log(result);
   }
   let sum = 0;
   let groveCoordinates = [1000, 2000, 3000];
