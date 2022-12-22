@@ -1,18 +1,18 @@
 require("./array");
 const fs = require("fs");
 
-const readInput = (inputFolder) => {
+const readInput = (inputFolder, doNotTrim) => {
   const data = fs.readFileSync(`${inputFolder}/input.txt`, "utf8");
 
-  const lines = data.split("\n").map((x) => x.trim());
+  const lines = data.split("\n").map((x) => doNotTrim ? x : x.trim());
 
   return lines;
 };
 
-const readExampleInput = (inputFolder) => {
+const readExampleInput = (inputFolder, doNotTrim) => {
   const data = fs.readFileSync(`${inputFolder}/example.txt`, "utf8");
 
-  const lines = data.split("\n").map((x) => x.trim());
+  const lines = data.split("\n").map((x) => doNotTrim ? x : x.trim());
 
   return lines;
 };
