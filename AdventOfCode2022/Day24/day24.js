@@ -3,19 +3,21 @@ const lines = utils.readInput(__dirname);
 
 const example = utils.readExampleInput(__dirname);
 
-const directions = [
+const dMoves = [
   [1, 0],
   [0, 1],
   [-1, 0],
   [0, -1],
+  [0, 0],
 ];
 
 function parseInput(lines) {
   let grid = {};
-  for (let i = 1; i < lines.length - 1; i++) {
-    for (let j = 1; j < lines[i].length - 1; j++) {
-      if (lines[i][j] !== ".") {
-        setValue(grid, [j - 1, i - 1], [lines[i][j]]);
+  for (let row = 1; row < lines.length - 1; row++) {
+    for (let column = 1; column < lines[row].length - 1; column++) {
+      let value = lines[row][column];
+      if (value !== ".") {
+        setValue(grid, [column - 1, row - 1], [value]);
       }
     }
   }
@@ -57,21 +59,22 @@ function moveBlizzards(grid, h, w) {
 
   for (let [key, blizzards] of Object.entries(grid)) {
     for (let blizzard of blizzards) {
-      let [x, y] = key.split(",").map((x) => +x);
+      let [x, y] = key.split(",").map((p) => +p);
       switch (blizzard) {
         case ">":
-          x++;
-          if (x === w) x = 0;
+          x = x === w - 1 ? 0 : x + 1;
           break;
         case "<":
-          x--;
-          if (x === -1) x = w - 1;
+          x = x === 0 ? w - 1 : x - 1;
+          break;
         case "v":
-          y++;
-          if (y === h) y = 0;
+          y = y === h - 1 ? 0 : y + 1;
+          break;
         case "^":
-          y--;
-          if (y === -1) y = h - 1;
+          y = y === 0 ? h - 1 : y - 1;
+          break;
+        default:
+          console.log("Unknown blizzard");
       }
 
       let next = getValue(nextGrid, [x, y]);
@@ -87,10 +90,12 @@ function moveBlizzards(grid, h, w) {
   return nextGrid;
 }
 
-function solve1(input, h, w) {
-  let [x, y] = [0, -1];
-  let q = [[0, input, [x, y], [[x, y]]]];
-  let minT = 265;
+function solveDfs(input, h, w) {
+  let start = [0, -1];
+  let end = [w - 1, h];
+  let [x, y] = start;
+  let q = [[0, input, [x, y]]];
+  let minT = 300;
 
   let visited = {};
 
@@ -103,12 +108,10 @@ function solve1(input, h, w) {
 
   while (q.length > 0) {
     let [t, g, [x, y]] = q.pop();
-    while (x != w - 1 || y != h - 1) {
-      let ll = Object.keys(q).length;
+    while (x != end[0] || y != end[1]) {
+      // let ll = Object.keys(q).length;
       // if (t % 100 == 0 || ll % 50 == 0)
       //   console.log(new Date().toLocaleTimeString(), t, minT, x, y, ll);
-
-      t++;
 
       let currentStateKey = `${t}:${x},${y}`;
       if (visited[currentStateKey]) {
@@ -116,6 +119,8 @@ function solve1(input, h, w) {
         break;
       }
       visited[currentStateKey] = t;
+
+      t++;
 
       if (t >= minT) {
         break;
@@ -128,20 +133,25 @@ function solve1(input, h, w) {
 
       g = blizzards[t];
 
-      let possibleMoves = directions.map((d) => plus([x, y], d));
+      let possibleMoves = dMoves.map(([dx, dy]) => [x + dx, y + dy]);
       possibleMoves = possibleMoves.filter(
-        ([x, y]) => x >= 0 && y >= 0 && x <= w - 1 && y <= h - 1
+        ([x1, y1]) =>
+          (x1 >= 0 && y1 >= 0 && x1 <= w - 1 && y1 <= h - 1) ||
+          (x1 == start[0] && y1 == [start[1]]) ||
+          (x1 == end[0] && y1 == end[1])
       );
       if (x === 0 && y === 0) {
         // can return to entrance
         possibleMoves.push([0, -1]);
       }
-      // or stay
-      possibleMoves.push([x, y]);
+      if (x === w - 1 && y === h - 1) {
+        possibleMoves.push([w - 1, h]);
+      }
 
       // avoid where blizzard
-      possibleMoves = possibleMoves.filter((p) => !getValue(g, p));
+      possibleMoves = possibleMoves.filter((move) => !getValue(g, move));
 
+      // avoid already visited
       possibleMoves = possibleMoves.filter((move) => !visited[`${t + 1}:${move.toString()}`]);
 
       if (possibleMoves.length === 0) {
@@ -156,16 +166,186 @@ function solve1(input, h, w) {
     minT = Math.min(minT, t);
   }
 
-  return minT + 1;
+  return minT;
 }
 
-function solve2(input) {}
+function solveBfs(input, h, w, start, end) {
+  let q = [start];
+  let minTime = 300;
+
+  let blizzards = [input];
+  let g = input;
+  for (let t = 1; t <= minTime; t++) {
+    g = moveBlizzards(g, h, w);
+    blizzards.push(g);
+  }
+
+  let t = 0;
+  while (!q.some(([x1, y1]) => x1 === end[0] && y1 === end[1]) && t < minTime) {
+    t++;
+    let next = {};
+    g = blizzards[t];
+    for (let [x, y] of q) {
+      // let ll = Object.keys(q).length;
+      // if (t % 100 == 0 || ll % 50 == 0)
+      //   console.log(new Date().toLocaleTimeString(), t, minT, x, y, ll);
+
+      let possibleMoves = dMoves.map((d) => plus([x, y], d));
+      possibleMoves = possibleMoves.filter(
+        ([x1, y1]) =>
+          (x1 >= 0 && y1 >= 0 && x1 <= w - 1 && y1 <= h - 1) ||
+          (x1 == start[0] && y1 == [start[1]]) ||
+          (x1 == end[0] && y1 == end[1])
+      );
+      if (x === 0 && y === 0) {
+        // can return to entrance
+        possibleMoves.push([0, -1]);
+      }
+      if (x === w - 1 && y === h - 1) {
+        possibleMoves.push([w - 1, h]);
+      }
+
+      // avoid where blizzard
+      possibleMoves = possibleMoves.filter((p) => !getValue(g, p));
+
+      possibleMoves.forEach((nextPosition) => (next[`${nextPosition.toString()}`] = nextPosition));
+    }
+
+    q = Object.values(next);
+  }
+
+  return t;
+}
+
+function solveBfs(input, h, w, start, end) {
+  let q = [start];
+  let minTime = 900;
+
+  let blizzards = [input];
+  let g = input;
+  for (let t = 1; t <= minTime; t++) {
+    g = moveBlizzards(g, h, w);
+    blizzards.push(g);
+  }
+
+  let t = 0;
+  while (!q.some(([x1, y1]) => x1 === end[0] && y1 === end[1]) && t < minTime) {
+    t++;
+    let next = {};
+    g = blizzards[t];
+    for (let [x, y] of q) {
+      // let ll = Object.keys(q).length;
+      // if (t % 100 == 0 || ll % 50 == 0)
+      //   console.log(new Date().toLocaleTimeString(), t, minT, x, y, ll);
+
+      let possibleMoves = dMoves.map((d) => plus([x, y], d));
+      possibleMoves = possibleMoves.filter(
+        ([x1, y1]) =>
+          (x1 >= 0 && y1 >= 0 && x1 <= w - 1 && y1 <= h - 1) ||
+          (x1 == start[0] && y1 == [start[1]]) ||
+          (x1 == end[0] && y1 == end[1])
+      );
+      if (x === 0 && y === 0) {
+        // can return to entrance
+        possibleMoves.push([0, -1]);
+      }
+      if (x === w - 1 && y === h - 1) {
+        possibleMoves.push([w - 1, h]);
+      }
+
+      // avoid where blizzard
+      possibleMoves = possibleMoves.filter((p) => !getValue(g, p));
+
+      possibleMoves.forEach((nextPosition) => (next[`${nextPosition.toString()}`] = nextPosition));
+    }
+
+    q = Object.values(next);
+  }
+
+  console.log("t1", t);
+
+  [start, end] = [end, start];
+  q = [start];
+  while (!q.some(([x1, y1]) => x1 === end[0] && y1 === end[1]) && t < minTime) {
+    t++;
+    let next = {};
+    g = blizzards[t];
+    for (let [x, y] of q) {
+      // let ll = Object.keys(q).length;
+      // if (t % 100 == 0 || ll % 50 == 0)
+      //   console.log(new Date().toLocaleTimeString(), t, minT, x, y, ll);
+
+      let possibleMoves = dMoves.map((d) => plus([x, y], d));
+      possibleMoves = possibleMoves.filter(
+        ([x1, y1]) =>
+          (x1 >= 0 && y1 >= 0 && x1 <= w - 1 && y1 <= h - 1) ||
+          (x1 == start[0] && y1 == [start[1]]) ||
+          (x1 == end[0] && y1 == end[1])
+      );
+      if (x === 0 && y === 0) {
+        // can return to entrance
+        possibleMoves.push([0, -1]);
+      }
+      if (x === w - 1 && y === h - 1) {
+        possibleMoves.push([w - 1, h]);
+      }
+
+      // avoid where blizzard
+      possibleMoves = possibleMoves.filter((p) => !getValue(g, p));
+
+      possibleMoves.forEach((nextPosition) => (next[`${nextPosition.toString()}`] = nextPosition));
+    }
+
+    q = Object.values(next);
+  }
+
+  console.log("t2", t);
+
+  [start, end] = [end, start];
+  q = [start];
+  while (!q.some(([x1, y1]) => x1 === end[0] && y1 === end[1]) && t < minTime) {
+    t++;
+    let next = {};
+    g = blizzards[t];
+    for (let [x, y] of q) {
+      // let ll = Object.keys(q).length;
+      // if (t % 100 == 0 || ll % 50 == 0)
+      //   console.log(new Date().toLocaleTimeString(), t, minT, x, y, ll);
+
+      let possibleMoves = dMoves.map((d) => plus([x, y], d));
+      possibleMoves = possibleMoves.filter(
+        ([x1, y1]) =>
+          (x1 >= 0 && y1 >= 0 && x1 <= w - 1 && y1 <= h - 1) ||
+          (x1 == start[0] && y1 == [start[1]]) ||
+          (x1 == end[0] && y1 == end[1])
+      );
+      if (x === 0 && y === 0) {
+        // can return to entrance
+        possibleMoves.push([0, -1]);
+      }
+      if (x === w - 1 && y === h - 1) {
+        possibleMoves.push([w - 1, h]);
+      }
+
+      // avoid where blizzard
+      possibleMoves = possibleMoves.filter((p) => !getValue(g, p));
+
+      possibleMoves.forEach((nextPosition) => (next[`${nextPosition.toString()}`] = nextPosition));
+    }
+
+    q = Object.values(next);
+  }
+
+  return t;
+}
+
+const exInput = parseInput(example);
+let [eh, ew] = [example.length - 2, example[0].length - 2];
+console.log(solveDfs(exInput, eh, ew));
 
 const input = parseInput(lines);
-const exInput = parseInput(example);
+let [h, w] = [lines.length - 2, lines[0].length - 2];
+console.log(solveDfs(input, h, w));
 
-console.log(solve1(exInput, example.length - 2, example[0].length - 2));
-console.log(solve1(input, lines.length - 2, lines[0].length - 2));
-
-console.log(solve2(exInput));
-console.log(solve2(input));
+console.log(solveBfs(exInput, eh, ew, [0, -1], [ew - 1, eh]));
+console.log(solveBfs(input, h, w, [0, -1], [w - 1, h]));
