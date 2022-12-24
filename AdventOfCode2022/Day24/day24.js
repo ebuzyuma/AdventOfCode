@@ -94,7 +94,7 @@ function solveDfs(input, h, w) {
   let start = [0, -1];
   let end = [w - 1, h];
   let [x, y] = start;
-  let q = [[0, input, [x, y]]];
+  let q = [[1, input, [x, y]]];
   let minT = 300;
 
   let visited = {};
@@ -119,8 +119,6 @@ function solveDfs(input, h, w) {
         break;
       }
       visited[currentStateKey] = t;
-
-      t++;
 
       if (t >= minT) {
         break;
@@ -160,13 +158,14 @@ function solveDfs(input, h, w) {
       }
 
       [x, y] = possibleMoves.shift();
-      possibleMoves.forEach((nextPosition) => q.push([t, g, nextPosition]));
+      possibleMoves.forEach((nextPosition) => q.push([t + 1, g, nextPosition]));
+      t++;
     }
 
     minT = Math.min(minT, t);
   }
 
-  return minT;
+  return minT - 1;
 }
 
 function solveBfs(input, h, w, start, end) {
