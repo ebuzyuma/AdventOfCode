@@ -87,15 +87,11 @@ function moveBlizzards(grid, h, w) {
   return nextGrid;
 }
 
-function findState(q, g, h, w, p) {
-  let s = toString(g, h, w, p);
-  return q.find(([t, g1, p1]) => s === toString(g1, h, w, p1));
-}
-
 function solve1(input, h, w) {
   let [x, y] = [0, -1];
-  let q = [[0, input, [x, y]]];
+  let q = [[0, input, [x, y], [[x, y]]]];
   let minT = 265;
+
   let visited = {};
 
   let blizzards = [input];
@@ -113,20 +109,23 @@ function solve1(input, h, w) {
       //   console.log(new Date().toLocaleTimeString(), t, minT, x, y, ll);
 
       t++;
+
       let currentStateKey = `${t}:${x},${y}`;
       if (visited[currentStateKey]) {
         t = minT;
         break;
       }
       visited[currentStateKey] = t;
+
       if (t >= minT) {
         break;
       }
       let bestT = t + h - 1 - y + w - 1 - x;
       if (bestT > minT) {
-        t = minT;
+        t = bestT;
         break;
       }
+
       g = blizzards[t];
 
       let possibleMoves = directions.map((d) => plus([x, y], d));
@@ -137,69 +136,27 @@ function solve1(input, h, w) {
         // can return to entrance
         possibleMoves.push([0, -1]);
       }
+      // or stay
       possibleMoves.push([x, y]);
 
       // avoid where blizzard
       possibleMoves = possibleMoves.filter((p) => !getValue(g, p));
 
+      possibleMoves = possibleMoves.filter((move) => !visited[`${t + 1}:${move.toString()}`]);
+
       if (possibleMoves.length === 0) {
         t = Number.MAX_SAFE_INTEGER;
         break;
       }
+
       [x, y] = possibleMoves.shift();
-      if (possibleMoves.length > 0) {
-        possibleMoves.forEach((p) => {
-          let moveStateKey = `${t+1}:${p.toString()}`;
-          if (visited[moveStateKey] < t) {
-            let iv = q.findIndex(([_, g1, p1]) => str === toString(g1, h, w, p1));
-            q[iv] = [t, g, p];
-          } else if (!visited[moveStateKey]) {
-            q.push([t, g, p]);
-          }
-        });
-      }
+      possibleMoves.forEach((nextPosition) => q.push([t, g, nextPosition]));
     }
 
     minT = Math.min(minT, t);
   }
 
   return minT + 1;
-}
-
-function solve1v1(grid, h, w) {
-  let up = [...Array(x)].map((_) => []);
-  let down = [...Array(x)].map((_) => []);
-  let left = [...Array(y)].map((_) => []);
-  let right = [...Array(y)].map((_) => []);
-  for (let [k, v] of Object.entries(grid)) {
-    let [x, y] = k.split(",").map((x) => +x);
-    switch (v) {
-      case "^":
-        up[x].push(y);
-        break;
-      case "v":
-        down[x].push(y);
-        break;
-      case "<":
-        left[y].push(x);
-        break;
-      case ">":
-        right[y].push(x);
-        break;
-    }
-  }
-
-  const getBlizzards = (t, h, w, [x, y]) => {
-    let upCount = up[x].map((b) => (yb - t) % h).reduce((r, yb) => r + (yb === y ? 1 : 0));
-  };
-
-  let q = [[0, -1]];
-  while (true) {
-    for (let [x, y] of q) {
-      if (y === -1) {
-      }
-    }
-  }
 }
 
 function solve2(input) {}
