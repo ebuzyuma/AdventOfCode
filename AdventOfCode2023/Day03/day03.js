@@ -13,27 +13,29 @@ const directions = [
   [1, 1],
 ];
 let numbers = [];
-let gearNeighbors = {}
+let gearNeighbors = {};
 for (let i = 0; i < lines.length; i++) {
   let line = lines[i];
-  for (let j = 0; j < line.length; j++) {    
+  for (let j = 0; j < line.length; j++) {
     if (Number.isInteger(+line[j])) {
       let number = "";
       let hasSymbol = false;
-      let gearPosition = '';
-      
-      while (Number.isInteger(+line[j])) {        
+      let gearPosition = "";
+
+      while (Number.isInteger(+line[j])) {
         number += line[j];
-        let neighbors = directions
-          .map(([dy, dx]) => (lines[i + dy] ? lines[i + dy][j + dx] : undefined))
-          ;
-        let symbolPosition = neighbors.findIndex((c) => c !== "." && !Number.isInteger(+c) && c !== undefined);
+        let neighbors = directions.map(([dy, dx]) =>
+          lines[i + dy] ? lines[i + dy][j + dx] : undefined
+        );
+        let symbolPosition = neighbors.findIndex(
+          (c) => c !== "." && !Number.isInteger(+c) && c !== undefined
+        );
         if (symbolPosition !== -1) {
           hasSymbol = true;
         }
-        if (neighbors[symbolPosition] === '*') {
+        if (neighbors[symbolPosition] === "*") {
           let [dy, dx] = directions[symbolPosition];
-          gearPosition = `${i+dy}x${j+dx}`;
+          gearPosition = `${i + dy}x${j + dx}`;
         }
         j++;
       }
@@ -49,9 +51,10 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 console.log(numbers.sum());
-// console.log(numbers)
 
 // Part 2
-let p2 = Object.values(gearNeighbors).filter(x => x.length == 2)
-.map(([a,b]) => +a* +b).sum()
+let p2 = Object.values(gearNeighbors)
+  .filter((x) => x.length == 2)
+  .map(([a, b]) => +a * +b)
+  .sum();
 console.log(p2);
