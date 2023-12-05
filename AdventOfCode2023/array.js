@@ -2,6 +2,10 @@ Array.prototype.numSort = function () {
   return this.sort((a, b) => a - b);
 };
 
+Array.prototype.orderBy = function (selector) {
+  return this.sort((a, b) => selector(a) - selector(b));
+};
+
 Array.prototype.last = function () {
   return this[this.length - 1];
 };
