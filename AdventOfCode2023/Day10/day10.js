@@ -2,6 +2,9 @@ const utils = require("../utils");
 const exampleInput = utils.readInput(__dirname, "example.txt");
 const puzzleInput = utils.readInput(__dirname, "input.txt");
 
+let rowIndex = 0;
+let colIndex = 1;
+
 function key(row, col) {
   return `${row}x${col}`;
 }
@@ -96,10 +99,6 @@ function findNext(map, [row, col], prev) {
   return next;
 }
 
-function findEnclosed(map, loop) {
-
-}
-
 function findLoop(map, [sRow, sCol]) {
   let loop = [[sRow, sCol]];
   let connections = findConnections(map, sRow, sCol);
@@ -115,38 +114,57 @@ function findLoop(map, [sRow, sCol]) {
 
   return loop;
 }
-function pointIsInPoly(p, polygon) {
-  var isInside = false;
-  var minX = polygon[0].x,
-    maxX = polygon[0].x;
-  var minY = polygon[0].y,
-    maxY = polygon[0].y;
-  for (var n = 1; n < polygon.length; n++) {
-    var q = polygon[n];
-    minX = Math.min(q.x, minX);
-    maxX = Math.max(q.x, maxX);
-    minY = Math.min(q.y, minY);
-    maxY = Math.max(q.y, maxY);
+
+function pointIsInPolygon([row, col], polygon) {
+  let isInside = false;
+  let minRow = polygon[0][rowIndex];
+  let maxRow = polygon[0][rowIndex];
+  let minCol = polygon[0][colIndex];
+  let maxCol = polygon[0][colIndex];
+  for (let [r, c] of polygon) {
+    minRow = Math.min(r, minRow);
+    maxRow = Math.max(r, maxRow);
+    minCol = Math.min(c, minCol);
+    maxCol = Math.max(c, maxCol);
   }
 
-  if (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) {
+  if (row < minRow || row > maxRow || col < minCol || col > maxCol) {
     return false;
   }
 
-  var i = 0,
-    j = polygon.length - 1;
-  for (i, j; i < polygon.length; j = i++) {
+  // Source: https://wrfranklin.org/Research/Short_Notes/pnpoly.html
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    let pi = polygon[i];
+    let pj = polygon[j];
     if (
-      polygon[i].y > p.y != polygon[j].y > p.y &&
-      p.x <
-        ((polygon[j].x - polygon[i].x) * (p.y - polygon[i].y)) / (polygon[j].y - polygon[i].y) +
-          polygon[i].x
+      pi[rowIndex] > row != pj[rowIndex] > row &&
+      col <
+        ((pj[colIndex] - pi[colIndex]) * (row - pi[rowIndex])) / (pj[rowIndex] - pi[rowIndex]) +
+          pi[colIndex]
     ) {
       isInside = !isInside;
     }
   }
 
   return isInside;
+}
+
+function findEnclosed(input, map, loop) {
+  let inside = [];
+  let loop2 = loop.map((x) => key(x[0], x[1]));
+
+  for (let row = 0; row < input.length; row++) {
+    for (let col = 0; col < input[row].length; col++) {
+      if (loop2.includes(key(row, col))) {
+        continue;
+      }
+      if (pointIsInPolygon([row, col], loop)) {
+        inside.push([row, col]);
+      }
+    }
+  }
+
+  return inside;
 }
 
 function solve(input) {
@@ -165,46 +183,9 @@ function solve(input) {
   }
 
   let loop = findLoop(map, [sRow, sCol]);
+  let inside = findEnclosed(input, map, loop);
 
-  let polygon = loop.map(([r, c]) => ({ x: c, y: r }));
-  let loop2 = loop.map(x => key(x[0], x[1]));
-
-  let inside = 0;
-  for (let row = 0; row < input.length; row++) {
-    for (let col = 0; col < input[row].length; col++) {
-      if (loop2.includes(key(row, col))) {
-        continue;
-      }
-      if (pointIsInPoly({ x: col, y: row }, polygon)) {
-        inside++;
-      }
-    }
-  }
-  // console.log(loop);
-
-  // let connections = findConnections(map, sRow, sCol);
-  // let previous = [
-  //   [sRow, sCol],
-  //   [sRow, sCol],
-  // ];
-  // let steps = 1;
-
-  // while (key(connections[0]) != key(connections[1])
-  //   && !(key(previous[0]) == key(connections[1]) && key(previous[1]) == key(connections[0]))
-  // ) {
-  //   let nextConnections = [
-  //     findNext(map, connections[0], previous[0]),
-  //     findNext(map, connections[1], previous[1]),
-  //   ];
-  //   previous = connections;
-  //   connections = nextConnections;
-  //   steps++;
-  //   if (steps > 7060) {
-  //     console.log(previous[0], '->', connections[0], previous[1], '->', connections[1]);
-  //   }
-  // }
-
-  return [(loop.length - 1) / 2, inside];
+  return [(loop.length - 1) / 2, inside.length];
 }
 
 console.log("example:", solve(exampleInput));
