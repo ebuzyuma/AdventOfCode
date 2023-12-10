@@ -149,15 +149,11 @@ function pointIsInPolygon([row, col], polygon) {
   return isInside;
 }
 
-function findEnclosed(input, map, loop) {
+function findEnclosed(input, loop) {
   let inside = [];
-  let loop2 = loop.map((x) => key(x[0], x[1]));
-
+  
   for (let row = 0; row < input.length; row++) {
     for (let col = 0; col < input[row].length; col++) {
-      if (loop2.includes(key(row, col))) {
-        continue;
-      }
       if (pointIsInPolygon([row, col], loop)) {
         inside.push([row, col]);
       }
@@ -182,10 +178,33 @@ function solve(input) {
     }
   }
 
+  // Part 1
   let loop = findLoop(map, [sRow, sCol]);
-  let inside = findEnclosed(input, map, loop);
 
-  return [(loop.length - 1) / 2, inside.length];
+  // Part 2
+  let polygon = [loop[0]];
+  let [pr, pc] = loop[0]
+  let dr = loop[1][rowIndex] - pr, dc = loop[1][colIndex] - pc;
+  for (let i = 1; i < loop.length; i++) {
+    let [r, c] = loop[i];
+    if (r - pr === dr && c - pc == dc) {
+      // same direction
+      [pr, pc] = [r, c];
+    } else {
+      // direction change
+      polygon.push([pr, pc]);
+      dr = r - pr;
+      dc = c - pc;
+      [pr, pc] = [r, c];
+    }
+  }
+  polygon.push(loop[0]);
+  let inside = findEnclosed(input, polygon);
+
+  let loopPoints = loop.map((x) => key(x[0], x[1]));
+  let insideWithoutLoop = inside.filter(x => !loopPoints.includes(key(x[0], x[1])));
+
+  return [(loop.length - 1) / 2, insideWithoutLoop.length];
 }
 
 console.log("example:", solve(exampleInput));
