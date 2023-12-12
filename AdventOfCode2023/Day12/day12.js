@@ -122,7 +122,9 @@ function solve(input) {
     sum += arrangements;
   }
 
-  // Part 2  
+  // Part 2
+  // Something is wrong with the memory. So just execute the script for every 100 like:
+  // node day12.js 0 100 && node day12.js 100 200 && node day12.js 200 300 && node day12.js 300 400 && node day12.js 400 500 && node day12.js 500 600 && node day12.js 600 700 && node day12.js 700 800 && node day12.js 800 900 && node day12.js 900 1000
   let sum2 = 0;
   let from = +process.argv[2] || 0;
   let to = +process.argv[3] || values.length;
@@ -130,7 +132,7 @@ function solve(input) {
     let recordX5 = Array(5).fill(record).join("?");
     let numbersX5 = Array(5).fill(numbers).flat();
 
-    // let arrangements2 = bfs(arg2, num2);    
+    // let arrangements2 = bfs(arg2, num2);
     let arrangements = findArrangements(recordX5, 0, numbersX5, {});
     sum2 += arrangements;
   }
@@ -138,5 +140,5 @@ function solve(input) {
   return [sum, sum2];
 }
 
-console.log("example:", solve(exampleInput));
+// console.log("example:", solve(exampleInput));
 console.log(" puzzle:", solve(puzzleInput));
