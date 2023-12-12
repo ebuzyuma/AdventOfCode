@@ -39,24 +39,21 @@ function findArrangements(conditions, start, groups, memo) {
   }
 
   let arrangements = 0;
-  let currentStart = start;
-
-  if (canPlace(conditions, currentStart, groups)) {
+  if (canPlace(conditions, start, groups)) {
     let groupSize = groups[0];
     let newCondition =
-      conditions.substring(0, currentStart) +
+      conditions.substring(0, start) +
       "#".repeat(groupSize) +
-      (currentStart + groupSize + 1 < conditions.length ? "." : "") +
-      conditions.substring(currentStart + groupSize + 1);
-    let local = findArrangements(newCondition, currentStart + groupSize + 1, groups.slice(1), memo);
+      (start + groupSize + 1 < conditions.length ? "." : "") +
+      conditions.substring(start + groupSize + 1);
+    let local = findArrangements(newCondition, start + groupSize + 1, groups.slice(1), memo);
     arrangements += local;
   }
 
-  if (conditions[currentStart] === "?") {
-    let newCondition =
-      conditions.substring(0, currentStart) + "." + conditions.substring(currentStart + 1);
-    if (isValidTail(newCondition, currentStart + 1, groups)) {
-      let local2 = findArrangements(newCondition, currentStart + 1, groups, memo);
+  if (conditions[start] === "?") {
+    let newCondition = conditions.substring(0, start) + "." + conditions.substring(start + 1);
+    if (isValidTail(newCondition, start + 1, groups)) {
+      let local2 = findArrangements(newCondition, start + 1, groups, memo);
       arrangements += local2;
     }
   }
@@ -128,6 +125,7 @@ function solve(input) {
   let sum2 = 0;
   let from = +process.argv[2] || 0;
   let to = +process.argv[3] || values.length;
+  let step = -1;
   for (let { record, numbers } of values.slice(from, to)) {
     let recordX5 = Array(5).fill(record).join("?");
     let numbersX5 = Array(5).fill(numbers).flat();
@@ -135,6 +133,7 @@ function solve(input) {
     // let arrangements2 = bfs(arg2, num2);
     let arrangements = findArrangements(recordX5, 0, numbersX5, {});
     sum2 += arrangements;
+    // console.log(step++, sum2);
   }
 
   return [sum, sum2];
