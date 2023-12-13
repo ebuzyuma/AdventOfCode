@@ -17,7 +17,7 @@ function isColReflected(map, col) {
   return true;
 }
 
-function getVerticalReflectionColumn(map) {
+function getReflectionColumn(map) {
   let maxCol = map[0].length;
 
   let col = 1;
@@ -27,16 +27,13 @@ function getVerticalReflectionColumn(map) {
   return col == maxCol ? null : col;
 }
 
-function getVerticalReflectionColumns(map) {
+function getReflectionColumns(map) {
   let maxCol = map[0].length;
-
   let result = [];
-  let col = 1;
-  while (col < maxCol) {
+  for (let col = 1; col < maxCol; col++) {
     if (isColReflected(map, col)) {
       result.push(col);
     }
-    col++;
   }
   return result;
 }
@@ -56,7 +53,7 @@ function isRowReflected(map, row) {
   return true;
 }
 
-function getHorizontalReflection(map) {
+function getReflectionRow(map) {
   let maxRow = map.length;
 
   let row = 1;
@@ -66,25 +63,22 @@ function getHorizontalReflection(map) {
   return row == maxRow ? null : row;
 }
 
-function getHorizontalReflectionColumns(map) {
+function getReflectionRows(map) {
   let maxRow = map.length;
 
   let result = [];
-  let row = 1;
-  while (row < maxRow) {
+  for (let row = 1; row < maxRow; row++) {
     if (isRowReflected(map, row)) {
       result.push(row);
     }
-    row++;
   }
   return result;
 }
 
 function findSmudge(map) {
-  let colR = getVerticalReflectionColumn(map);
-  let rowR = getHorizontalReflection(map);
+  let originalReflectionColumn = getReflectionColumn(map);
+  let originalReflectionRow = getReflectionRow(map);
 
-  let grid = map.map((row) => row.split(""));
   for (let row = 0; row < map.length; row++) {
     for (let col = 0; col < map[row].length; col++) {
       let oldRow = map[row];
@@ -92,15 +86,15 @@ function findSmudge(map) {
       let newRow = map[row].substring(0, col) + newValue + map[row].substring(col + 1);
       map[row] = newRow;
 
-      let colReflection = getVerticalReflectionColumns(map);
-      let x = colReflection.filter((r) => r !== colR);
-      if (x.length > 0) {
-        return [x[0], null];
+      let reflectionCols = getReflectionColumns(map);
+      let cols = reflectionCols.filter((r) => r !== originalReflectionColumn);
+      if (cols.length > 0) {
+        return [cols[0], null];
       }
-      let rowReflection = getHorizontalReflectionColumns(map);
-      let y = rowReflection.filter(r => r !== rowR);
-      if (y.length > 0) {
-        return [null, y[0]];
+      let reflectionRows = getReflectionRows(map);
+      let rows = reflectionRows.filter(r => r !== originalReflectionRow);
+      if (rows.length > 0) {
+        return [null, rows[0]];
       }
       map[row] = oldRow;
     }
@@ -114,23 +108,23 @@ function solve(input) {
   // Part 1
   let p1 = 0;
   for (let map of maps) {
-    let verticalReflection = getVerticalReflectionColumn(map);
-    if (verticalReflection) {
-      p1 += verticalReflection;
+    let reflectionCol = getReflectionColumn(map);
+    if (reflectionCol) {
+      p1 += reflectionCol;
     } else {
-      let rowReflection = getHorizontalReflection(map);
-      p1 += 100 * rowReflection;
+      let reflectionRow = getReflectionRow(map);
+      p1 += 100 * reflectionRow;
     }
   }
 
   // Part 2
   let p2 = 0;
   for (let map of maps) {
-    let [v, h] = findSmudge(map);
-    if (v) {
-      p2 += v;
+    let [reflectionCol, reflectionRow] = findSmudge(map);
+    if (reflectionCol) {
+      p2 += reflectionCol;
     } else {
-      p2 += 100 * h;
+      p2 += 100 * reflectionRow;
     }
   }
 
