@@ -4,7 +4,7 @@ const puzzleInput = utils.readInput(__dirname, "input.txt");
 
 function tiltNorth(grid) {
   for (let col = 0; col < grid[0].length; col++) {
-    let stopPosition = undefined;
+    let stopPosition;
     for (let row = 0; row < grid.length; row++) {
       let value = grid[row][col];
       if (value == "O" && stopPosition) {
@@ -22,7 +22,7 @@ function tiltNorth(grid) {
 
 function tiltWest(grid) {
   for (let row = 0; row < grid.length; row++) {
-    let stopPosition = undefined;
+    let stopPosition;
     for (let col = 0; col < grid[0].length; col++) {
       let value = grid[row][col];
       if (value == "O" && stopPosition) {
@@ -40,7 +40,7 @@ function tiltWest(grid) {
 
 function tiltSouth(grid) {
   for (let col = 0; col < grid[0].length; col++) {
-    let stopPosition = undefined;
+    let stopPosition;
     for (let row = grid.length - 1; row >= 0; row--) {
       let value = grid[row][col];
       if (value == "O" && stopPosition) {
@@ -58,7 +58,7 @@ function tiltSouth(grid) {
 
 function tiltEast(grid) {
   for (let row = 0; row < grid.length; row++) {
-    let stopPosition = undefined;
+    let stopPosition;
     for (let col = grid[0].length - 1; col >= 0; col--) {
       let value = grid[row][col];
       if (value == "O" && stopPosition) {
@@ -121,53 +121,8 @@ function findRocks(grid) {
   return [roundedRocks, cubeRocks];
 }
 
+// Another approach for tile where you go through all rounded rocks
 function tilt(roundedRocks, cubeRocks, direction, maxRow, maxCol) {
-  let newPosition = [];
-  let placed = new Set();
-  for (let { row, col } of roundedRocks) {
-    if (direction === "N") {
-      let colStopRocks = cubeRocks[`col_${col}`];
-      let stopRocks = colStopRocks?.filter((x) => x < row);
-      let newRow = stopRocks?.last() + 1 || 0;
-      while (placed.has(`${newRow}x${col}`)) {
-        newRow++;
-      }
-      newPosition.push({ row: newRow, col });
-      placed.add(`${newRow}x${col}`);
-    } else if (direction === "W") {
-      let rowStopRocks = cubeRocks[`row_${row}`];
-      let stopRocks = rowStopRocks?.filter((x) => x < col);
-      let newCol = stopRocks?.last() + 1 || 0;
-      while (placed.has(`${row}x${newCol}`)) {
-        newCol++;
-      }
-      newPosition.push({ row, col: newCol });
-      placed.add(`${row}x${newCol}`);
-    } else if (direction === "S") {
-      let colStopRocks = cubeRocks[`col_${col}`];
-      let stopRocks = colStopRocks?.filter((x) => x > row);
-      let newRow = stopRocks && stopRocks?.length > 0 ? stopRocks[0] - 1 : maxRow - 1;
-      while (placed.has(`${newRow}x${col}`)) {
-        newRow--;
-      }
-      newPosition.push({ row: newRow, col });
-      placed.add(`${newRow}x${col}`);
-    } else if (direction === "E") {
-      let rowStopRocks = cubeRocks[`row_${row}`];
-      let stopRocks = rowStopRocks?.filter((x) => x > col);
-      let newCol = stopRocks && stopRocks.length > 0 ? stopRocks[0] - 1 : maxCol - 1;
-      while (placed.has(`${row}x${newCol}`)) {
-        newCol--;
-      }
-      newPosition.push({ row, col: newCol });
-      placed.add(`${row}x${newCol}`);
-    }
-  }
-
-  return newPosition;
-}
-
-function tilt2(roundedRocks, cubeRocks, direction, maxRow, maxCol) {
   let newPosition = [];
   let placed = new Set();
   for (let { row, col } of roundedRocks) {
@@ -253,25 +208,16 @@ function solve(input) {
   let cycles = 1000000000;
   let memo = {};
   for (let i = 0; i < cycles; i++) {
-    let key = roundedRocks.map((x) => `${x.row}x${x.col}`).join("|");
-    if (i % 1000000 == 0) {
-      console.log(i, score2(roundedRocks, grid.length));
-    }
     roundedRocks = tilt(roundedRocks, cubeRocks, "N", grid.length, grid[0].length);
-    if (i == 0) {
-      console.log(i, score2(roundedRocks, grid.length));
-    }
-
     roundedRocks = tilt(roundedRocks, cubeRocks, "W", grid.length, grid[0].length);
     roundedRocks = tilt(roundedRocks, cubeRocks, "S", grid.length, grid[0].length);
     roundedRocks = tilt(roundedRocks, cubeRocks, "E", grid.length, grid[0].length);
 
-    key = roundedRocks
+    let key = roundedRocks
       .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row))
       .map((x) => `${x.row}x${x.col}`)
       .join("|");
     if (memo[key]) {
-      console.log(i, memo[key]);
       let cycleLength = i - memo[key].i;
       let left = (cycles - i) % cycleLength;
       i = cycles - left;
