@@ -118,6 +118,7 @@ function solve(input) {
   let visited = runBeam(grid, { row: 0, col: 0 }, { row: 0, col: 1 });
   let p1 = countEnergized(visited);
 
+  // Part 2
   let rows = grid.length;
   let cols = grid[0].length;
   let max = 0;
@@ -135,10 +136,7 @@ function solve(input) {
     max = Math.max(max, countEnergized(topToBottom), countEnergized(bottomToTop));
   }
 
-  // Part 2
-  let p2 = Object.keys(visited).length;
-
-  return [p1, p2, max];
+  return [p1, max];
 }
 
 console.log("example:", solve(exampleInput));
