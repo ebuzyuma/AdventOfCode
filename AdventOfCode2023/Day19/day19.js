@@ -27,9 +27,6 @@ function findOptions(workflows) {
   let result = [];
   let queue = [{ workflow: "in", ranges: initialRanges }];
   while (queue.length > 0) {
-    if (result.length % 100 === 0) {
-      console.log(result.length, queue.length);
-    }
     let state = queue.pop();
     if (state.workflow === "A") {
       result.push(state.ranges);
@@ -134,14 +131,13 @@ function solve(input) {
 
   // Part 2
   let ranges = findOptions(workflows);
-  let p2 = 0;
-  let result = ranges
+  let p2 = ranges
     .map(
       (r) => (r.x.to - r.x.from + 1) * (r.m.to - r.m.from + 1) * (r.a.to - r.a.from + 1) * (r.s.to - r.s.from + 1)
     )
     .sum();
 
-  return [p1, p2, result];
+  return [p1, p2];
 }
 
 console.log("example:", solve(exampleInput));
