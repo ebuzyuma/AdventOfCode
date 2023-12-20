@@ -1,5 +1,4 @@
 import * as utils from "../utils.mjs";
-import { lcmArray } from "../algorithms.mjs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
@@ -106,10 +105,12 @@ function solve(input, targetModule) {
   // Part 2
   // target = rx
   // 0 -> rx <=> 1 -> &zp <=> 1 -> zp.connected
-  let leadToTarget = Object.keys(modules).find(m => modules[m].destinations.includes(targetModule))
-  let connected = Object.keys(modules[leadToTarget].connected)
-  let cycles = connected.map(c => findCycle(modules, c, highPulse));
-  let p2 = lcmArray(cycles)
+  let leadToTarget = Object.keys(modules).find((m) =>
+    modules[m].destinations.includes(targetModule)
+  );
+  let connected = Object.keys(modules[leadToTarget].connected);
+  let cycles = connected.map((c) => findCycle(modules, c, highPulse));
+  let p2 = cycles.product();
 
   return [p1, p2];
 }
