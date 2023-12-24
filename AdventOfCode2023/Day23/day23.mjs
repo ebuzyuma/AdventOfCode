@@ -73,44 +73,6 @@ function move(grid, start, end, skipSlopes) {
   return getValue(visited, end).length - 1;
 }
 
-function move2(grid, start, end, skipSlopes) {
-  let paths = [{ path: [start] }];
-  let visited = {};
-  while (paths.length > 0) {
-    let nextPaths = [];
-    for (let { path } of paths) {
-      let pos = path.last();
-      let anotherPathToThisPos = getValue(visited, pos, { length: 0 });
-      if (path.length < anotherPathToThisPos.length) {
-        continue;
-      }
-
-      setValue(visited, pos, path.map(getKey));
-
-      let possibleNext = [];
-      let value = grid[pos.row][pos.col];
-      if (!skipSlopes && strDirs.includes(value)) {
-        let dir = dirs[strDirs.indexOf(value)];
-        possibleNext = [{ row: pos.row + dir.dr, col: pos.col + dir.dc }];
-      } else {
-        possibleNext = dirs
-          .map((d) => ({ row: pos.row + d.dr, col: pos.col + d.dc }))
-          .filter((p) => p.row >= 0 && p.row < grid.length);
-      }
-
-      possibleNext = possibleNext
-        .filter((p) => grid[p.row][p.col] !== "#")
-        .filter((p) => !path.find((x) => x.row === p.row && x.col === p.col));
-
-      let extraOptions = possibleNext.map((p) => ({ path: [...path, p] }));
-      paths.push(...extraOptions);
-      paths = paths.orderBy((x) => x.path.length);
-    }
-  }
-
-  return getValue(visited, end).length - 1;
-}
-
 function findAdjacentNodes(grid, sPos) {
   let adjacent = [];
   let visited = {};
@@ -174,43 +136,7 @@ function buildGraph(grid, start) {
   return nodes;
 }
 
-function dfs(edges, node, visited, parentNode) {
-  let adjacentEdges = edges.filter((e) => e.node1 === node || e.node2 === node);
-  let adjacentNodes = adjacentEdges.map((e) => (e.node1 === node ? e.node2 : e.node1));
-  visited[node] = true;
-  for (let adjacentNode of adjacentNodes) {
-    if (!visited[adjacentNode]) {
-      let result = dfs(edges, adjacentNode, visited, node);
-      if (result) {
-        return result;
-      }
-    } else if (adjacentNode !== parentNode) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function hasCycle(edges) {
-  let nodes = new Set(edges.map((e) => [e.node1, e.node2]).flat());
-  let visited = {};
-  for (let node of nodes) {
-    if (visited[node]) {
-      continue;
-    }
-
-    visited[node] = true;
-    let result = dfs(edges, node, visited);
-    if (result) {
-      return result;
-    }
-  }
-
-  return false;
-}
-
-function maxWeightSpanningTree(nodes) {
+function getEdges(nodes) {
   let edges = {};
   for (let [node1Key, adjacent] of Object.entries(nodes)) {
     for (let node2 of adjacent) {
@@ -227,58 +153,6 @@ function maxWeightSpanningTree(nodes) {
   }
 
   return Object.values(edges);
-
-  let n = Object.keys(nodes).length;
-  let sortedEdges = Object.values(edges).orderBy((e) => e.length);
-  let tree = [];
-  while (Object.keys(tree).length != n - 1) {
-    let max = sortedEdges.pop();
-    let cycle = hasCycle([...tree, max]);
-    if (!cycle) {
-      tree.push(max);
-    }
-  }
-
-  return tree;
-}
-
-function findPath(edges, start, end) {
-  let queue = [start];
-  let visited = { [start]: [] };
-  while (queue.length > 0) {
-    let node = queue.shift();
-    if (node === end) {
-      return visited[node];
-    }
-
-    let adjacentEdges = edges.filter((e) => e.node1 === node || e.node2 === node);
-    for (let adjacentEdge of adjacentEdges) {
-      let adjacentNode = adjacentEdge.node1 === node ? adjacentEdge.node2 : adjacentEdge.node1;
-      if (!visited[adjacentNode]) {
-        visited[adjacentNode] = [...visited[node], adjacentEdge];
-        queue.push(adjacentNode);
-      }
-    }
-  }
-}
-
-function maxPath(edges, path, from, to) {
-  let adjacentEdges = edges.filter((e) => e.node1 === from || e.node2 === from);
-  let options = adjacentEdges.filter((e) => !path.includes(e));
-  let max = 0;
-  if (options.length === 0 && from !== to) {
-    return -Number.MAX_SAFE_INTEGER;
-  }
-  for (let adjacentEdge of options) {
-    let adjacentNode = adjacentEdge.node1 === from ? adjacentEdge.node2 : adjacentEdge.node1;
-    let localMax = adjacentEdge.length + maxPath(edges, [...path, adjacentEdge], adjacentNode, to);
-    if (adjacentEdge === to)
-      if (localMax > max) {
-        max = localMax;
-      }
-  }
-
-  return max;
 }
 
 function findMaxPath(edges, start, end) {
@@ -311,55 +185,21 @@ function findMaxPath(edges, start, end) {
   return longestPath;
 }
 
-// function findMaxPath(edges, start, end) {
-//   let path = edges.filter((e) => e.node1 === start || e.node2 === start);
-//   let max = maxPath(edges, [], start, end);
-//   return max;
-// }
-
-function dijkstra(graph, source, target) {
-  let dist = {};
-  dist[source] = 0;
-  let queue = [{ from: undefined, to: source, length: 0 }];
-  while (queue.length > 0) {
-    let max = queue.pop();
-    let next = [];
-    for (let neighbor of graph[max.to]) {
-      let nKey = getKey(neighbor.pos);
-      if (dist[nKey] !== undefined) {
-        continue;
-      }
-      let alt = (dist[max.to] ?? 0) + neighbor.length;
-      if (!dist[nKey] || alt > dist[nKey]) {
-        dist[nKey] = alt;
-      }
-      next.push({ from: max.to, to: nKey, length: neighbor.length });
-    }
-    queue = next.orderBy((x) => x.length);
-  }
-
-  return dist[target];
-}
-
 function solve(input) {
   let grid = input.map((line) => line.split(""));
   let sPos = { row: 0, col: 1 };
   let ePos = { row: grid.length - 1, col: grid[0].length - 2 };
 
   // Part 1
-  let p1 = 0;
-  // let p1 = move(grid, sPos, ePos, false);
+  let p1 = move(grid, sPos, ePos, false);
 
   // Part 2
   console.log("part 2");
   // let p2 = move(grid, sPos, ePos, true);
   let graph = buildGraph(grid, sPos);
-  let tree = maxWeightSpanningTree(graph);
+  let tree = getEdges(graph);
   console.log(tree);
-  // let path = findPath(tree, getKey(sPos), getKey(ePos));
   let path = findMaxPath(tree, getKey(sPos), getKey(ePos));
-  // let path = dijkstra(graph, getKey(sPos), getKey(ePos));
-  // console.log(tree);
 
   return [p1, path];
 }
