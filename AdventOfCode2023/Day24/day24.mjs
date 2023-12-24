@@ -5,7 +5,7 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const exampleInput = utils.readInput(scriptDirectory, "example.txt");
 const puzzleInput = utils.readInput(scriptDirectory, "input.txt");
 
-function intersection(h1, h2, ignoreZ = true) {
+function intersection(h1, h2) {
   if (h2.velocity[0] === h1.velocity[0] && h2.velocity[1] === h1.velocity[1]) {
     return undefined;
   }
@@ -29,13 +29,6 @@ function intersection(h1, h2, ignoreZ = true) {
     return undefined;
   }
 
-  if (!ignoreZ) {
-    let z1 = pos[2];
-    let z2 = h2.position[2] + u * h2.velocity[2];
-    if (z1 !== z2) {
-      return undefined;
-    }
-  }
   return pos;
 }
 
@@ -63,6 +56,7 @@ function solve(input, [from, to]) {
   }
 
   // Part 2
+  let p2 = 0;
   let grid = {};
   let same = undefined;
   let parallel = undefined;
@@ -99,80 +93,7 @@ function solve(input, [from, to]) {
     let pos2 = [0, 1, 2].map((n) => h2.position[n] + h2.velocity[n] * t2);
     let velocity = [0, 1, 2].map((n) => (pos1[n] - pos2[n]) / (t1 - t2));
     let position = [0, 1, 2].map((n) => pos1[n] - velocity[n] * t1);
-    console.log(t1, t2, velocity, position, position.sum());
-  }
-
-  console.log();
-  let p2 = 0;
-  let sorted = hailstones.orderBy((h) => h.position[2]);
-  let deltaZ = sorted[1].position[2] - sorted[0].position[2];
-  let deltaV = sorted[1].velocity[2] - sorted[0].velocity[2];
-  let maxT = deltaZ / deltaV;
-  let first = sorted.pop();
-  for (let firstHit = 1; firstHit < 10000; firstHit++) {
-    let hitPos = [0, 1, 2].map((n) => first.position[n] + firstHit * first.velocity[n]);
-
-    for (let vz = 1; vz < 1000; vz++) {
-      let t = sorted.map(
-        (h) => (hitPos[2] - h.position[2] - h.velocity[2] * firstHit) / (vz - h.velocity[2])
-      );
-      let allPerfect = t.every(Number.isInteger);
-      if (allPerfect) {
-        // console.log(firstHit, vz);
-      }
-    }
-  }
-  // console.log(sorted);
-  let options = {};
-  // 1st second hit i
-  // 2nd second hit j
-
-  for (let i = 0; i < hailstones.length; i++) {
-    for (let j = 0; j < hailstones.length; j++) {
-      if (i == j) continue;
-      let ih = hailstones[i];
-      let jh = hailstones[j];
-      let found = 0;
-      for (let firstHit = 1; firstHit < 100; firstHit++) {
-        for (let secondHit = firstHit + 1; secondHit < 100; secondHit++) {
-          let iHitPos = [0, 1, 2].map((n) => ih.position[n] + firstHit * ih.velocity[n]);
-          let jHitPos = [0, 1, 2].map((n) => jh.position[n] + secondHit * jh.velocity[n]);
-          let velocity = [0, 1, 2].map((n) => (jHitPos[n] - iHitPos[n]) / (secondHit - firstHit));
-          let position = [0, 1, 2].map((n) => iHitPos[n] - firstHit * velocity[n]);
-          if (velocity.every(Number.isInteger) && position.every(Number.isInteger)) {
-            options[`${position.join(", ")} @ ${velocity.join(", ")}`] = { velocity, position };
-            found++;
-          }
-        }
-
-        if (found) {
-          // console.log(i, j, found);
-          break;
-        }
-      }
-    }
-  }
-
-  console.log("options", Object.values(options).length);
-
-  for (let option of Object.values(options)) {
-    let valid = true;
-    for (let hailstone of hailstones) {
-      let cross = intersection(option, hailstone, false);
-      if (!cross) {
-        valid = false;
-        break;
-      }
-      let perfect = [0, 1, 2].every((n) => Number.isInteger(cross[n]));
-      if (!perfect) {
-        valid = false;
-        break;
-      }
-    }
-
-    if (valid) {
-      console.log(option);
-    }
+    p2 = position.sum();
   }
 
   return [p1, p2];
