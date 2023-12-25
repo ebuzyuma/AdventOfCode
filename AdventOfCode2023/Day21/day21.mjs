@@ -252,9 +252,6 @@ function solve(input) {
   // 2 4 6 6 4 2
   // 2 4 6 8 8 6 4 2
   // => 0 4 12 24 40
-  let mainRhombV1 = 3776;
-  let mainRhombV2 = 3642;
-  let twoBetweenRhomb = 7453;
   let levelsFromCenter = 1;
   let mainRhomb1Count = 1;
   let mainRhomb2Count = 0;
@@ -271,7 +268,7 @@ function solve(input) {
       mainRhomb1Size * mainRhomb1Count +
       mainRhomb2Size * mainRhomb2Count +
       (twoSubRhombsSize * subRhombsCount) / 2;
-    if (steps > p2StepsCount - 131 * 3 || steps < 1000) console.log("estimate:", steps, estimate);
+    if (steps > p2StepsCount - 131 * 3 || steps < 500) console.log("estimate:", steps, estimate);
   }
 
   return [p1Positions.length, estimate];
