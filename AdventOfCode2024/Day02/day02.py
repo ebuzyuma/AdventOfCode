@@ -1,34 +1,16 @@
-sign = lambda x: x and (1, -1)[x<0]
+from itertools import combinations
 
 def is_safe(report):
-  direction = sign(report[0] - report[1])
-  i = 0
-  while(i < len(report) - 1):
-    diff = report[i] - report[i + 1]
-    if (abs(diff) > 3 or sign(diff) != direction):
-      return False
-    i = i + 1
-      
-  return True
+  d = report[0] - report[1]
+  return all(((d > 0 and a > b) or (d < 0 and a < b)) and 1 <= abs(a-b) <= 3 for a,b in zip(report, report[1:]))
 
 def is_safe2(report):
-  if (is_safe(report)):
-    return True
-  
-  i = 0
-  while (i < len(report)):
-    new_report = report.copy()
-    del new_report[i]
-    if (is_safe(new_report)):
-      return True
-    i = i + 1
-    
-  return False
+  return any(map(is_safe, [report, *combinations(report, len(report) - 1)]))
 
 def solve(file):  
   data = list(map(lambda str: list(map(int, str.rstrip().split(' '))),open(file).readlines()))
-  p1 = list(map(is_safe, data)).count(True)
-  p2 = list(map(is_safe2, data)).count(True)
+  p1 = sum(map(is_safe, data))
+  p2 = sum(map(is_safe2, data))
   return p1, p2
 
 print(solve('example.txt'))
