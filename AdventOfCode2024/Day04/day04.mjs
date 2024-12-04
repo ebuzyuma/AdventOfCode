@@ -5,7 +5,7 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const exampleInput = utils.readInput(scriptDirectory, "example.txt");
 const puzzleInput = utils.readInput(scriptDirectory, "input.txt");
 
-function getWord(input, i, j, di, dj) {
+function getWord(input, i, j, [di, dj]) {
   let word = "";
   for (let t = 0; t < 4; t++) {
     let row = input[i + t * di];
@@ -25,43 +25,33 @@ function getWord(input, i, j, di, dj) {
 
 function countXmas(input, i, j) {
   let cellCount = 0;
-  let row = getWord(input, i, j, 0, 1);
-  if (row == "XMAS" || row == "SAMX") cellCount++;
 
-  let column = getWord(input, i, j, 1, 0);
-  if (column == "XMAS" || column == "SAMX") cellCount++;
+  let directions = [
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, -1],
+  ];
 
-  let diag = getWord(input, i, j, 1, 1);
-  if (diag == "XMAS" || diag == "SAMX") cellCount++;
-
-  let diag2 = getWord(input, i, j, 1, -1);
-  if (diag2 == "XMAS" || diag2 == "SAMX") cellCount++;
-
-  // console.log(i, j, cellCount);
+  for (let dir of directions) {
+    let word = getWord(input, i, j, dir);
+    if (word == "XMAS" || word == "SAMX") {
+      cellCount++;
+    }
+  }
 
   return cellCount;
 }
 
 function countXmas2(input, i, j) {
-  if (
-    input[i][j] == "A" &&
-    ((input[i - 1][j - 1] == "M" &&
-      input[i + 1][j - 1] == "M" &&
-      input[i - 1][j + 1] == "S" &&
-      input[i + 1][j + 1] == "S") ||
-      (input[i - 1][j - 1] == "S" &&
-        input[i + 1][j - 1] == "S" &&
-        input[i - 1][j + 1] == "M" &&
-        input[i + 1][j + 1] == "M") ||
-      (input[i - 1][j - 1] == "M" &&
-        input[i + 1][j - 1] == "S" &&
-        input[i - 1][j + 1] == "M" &&
-        input[i + 1][j + 1] == "S") ||
-      (input[i - 1][j - 1] == "S" &&
-        input[i + 1][j - 1] == "M" &&
-        input[i - 1][j + 1] == "S" &&
-        input[i + 1][j + 1] == "M"))
-  ) {
+  let word =
+    input[i - 1][j - 1] +
+    input[i - 1][j + 1] +
+    input[i][j] +
+    input[i + 1][j - 1] +
+    input[i + 1][j + 1];
+
+  if (word == "MMASS" || word == "SSAMM" || word == "MSAMS" || word == "SMASM") {
     return 1;
   }
   return 0;
