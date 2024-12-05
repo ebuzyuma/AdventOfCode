@@ -8,7 +8,6 @@ const puzzleInput = utils.readInput(scriptDirectory, "input.txt");
 function solve(input) {
   // Part 1
   const [rulesInput, updatesInput] = input.splitBy("");
-  const updates = updatesInput.map((x) => x.split(",").map((n) => +n));
 
   const rules = rulesInput.map((x) => x.split("|"));
   let p1 = 0;
@@ -25,8 +24,8 @@ function solve(input) {
     }
 
     if (isValid) {
-      let numbers = update.split(",").map((n) => +n);
-      let middle = numbers[(numbers.length - 1) / 2];
+      let pages = update.split(",").map((n) => +n);
+      let middle = pages[(pages.length - 1) / 2];
       p1 += middle;
     } else {
       incorrect.push(update);
@@ -42,8 +41,8 @@ function solve(input) {
   }
 
   for (let update of incorrect) {
-    let numbers = update.split(",");
-    numbers.sort((a, b) => {
+    let pages = update.split(",");
+    pages.sort((a, b) => {
       if (rulesMap[a]?.includes(b)) {
         return -1;
       }
@@ -54,7 +53,7 @@ function solve(input) {
       return 0;
     });
 
-    let middle = numbers[(numbers.length - 1) / 2];
+    let middle = pages[(pages.length - 1) / 2];
     p2 += +middle;
   }
 
