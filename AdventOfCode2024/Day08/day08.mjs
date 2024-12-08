@@ -9,10 +9,10 @@ function solve(input) {
   // Part 1
   let antennas = {};
 
-  const h = input.length;
-  const w = input[0].length;
-  for (let row = 0; row < input.length; row++) {
-    for (let col = 0; col < input[0].length; col++) {
+  const rows = input.length;
+  const cols = input[0].length;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
       let x = input[row][col];
       if (x != "." && x != "#") {
         antennas[x] = antennas[x] ?? [];
@@ -20,6 +20,12 @@ function solve(input) {
       }
     }
   }
+
+  const isInGrid = (node) => {
+    return node[0] >= 0 && node[0] < rows && node[1] >= 0 && node[1] < cols;
+  };
+
+  const plus = (n1, n2) => [n1[0] + n2[0], n1[1] + n2[1]];
 
   let antinodes = new Set();
   let antinodes2 = new Set();
@@ -30,31 +36,30 @@ function solve(input) {
         const p2 = value[j];
         const dRow = p2[0] - p1[0];
         const dCol = p2[1] - p1[1];
-        let a1 = [p1[0] - dRow, p1[1] - dCol];
-        let a2 = [p2[0] + dRow, p2[1] + dCol];
-        if (a1[0] >= 0 && a1[0] < h && a1[1] >= 0 && a1[1] < w) {
+        let a1 = plus(p1, [-dRow, -dCol]);
+        let a2 = plus(p2, [dRow, dCol]);
+        if (isInGrid(a1)) {
           antinodes.add(a1.join("x"));
         }
-        if (a2[0] >= 0 && a2[0] < h && a2[1] >= 0 && a2[1] < w) {
+        if (isInGrid(a2)) {
           antinodes.add(a2.join("x"));
         }
 
-        let k = -1;
-        antinodes2.add(p1.join("x"));
+        // Part 2
+        let k = 0;
         while (true) {
-          a1 = [p1[0] + k * dRow, p1[1] + k * dCol];
-          if (a1[0] >= 0 && a1[0] < h && a1[1] >= 0 && a1[1] < w) {
+          a1 = plus(p1, [k * dRow, k * dCol]);
+          if (isInGrid(a1)) {
             antinodes2.add(a1.join("x"));
             k--;
           } else {
             break;
           }
         }
-        k = 1;
-        antinodes2.add(p2.join("x"));
+        k = 0;
         while (true) {
-          a2 = [p2[0] + k * dRow, p2[1] + k * dCol];
-          if (a2[0] >= 0 && a2[0] < h && a2[1] >= 0 && a2[1] < w) {
+          a2 = plus(p2, [k * dRow, k * dCol]);
+          if (isInGrid(a2)) {
             antinodes2.add(a2.join("x"));
             k++;
           } else {
@@ -66,9 +71,7 @@ function solve(input) {
   }
 
   const p1 = antinodes.size;
-
-  // Part 2
-  let p2 = antinodes2.size;
+  const p2 = antinodes2.size;
   return [p1, p2];
 }
 
