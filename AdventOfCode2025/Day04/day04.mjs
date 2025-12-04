@@ -7,34 +7,41 @@ const puzzleInput = utils.readInput(scriptDirectory, "input.txt");
 
 function solve(input) {
   // Part 1
-  let p1 = 0;
   let grid = {};
-  for (let y = 0; y < input.length; y++) {
-    for (let x = 0; x < input[y].length; x++) {
+  let maxX = input[0].length;
+  let maxY = input.length;
+  for (let y = 0; y < maxY; y++) {
+    for (let x = 0; x < maxX; x++) {
       grid[`${x},${y}`] = input[y][x];
     }
   }
 
-  const getNeighbors = (x, y, grid) => {
+  const getValue = (grid, x, y) => grid[`${x},${y}`];
+  const setValue = (grid, x, y, value) => {
+    grid[`${x},${y}`] = value;
+  };
+
+  const getNeighbors = (grid, x, y, nValue = "@") => {
     let result = [];
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         if (dx === 0 && dy === 0) continue;
         let nx = x + dx;
         let ny = y + dy;
-        let neighborValue = grid[`${nx},${ny}`];
-        if (neighborValue === "@") result.push(neighborValue);
+        let neighborValue = getValue(grid, nx, ny);
+        if (neighborValue === nValue) result.push(neighborValue);
       }
     }
 
     return result;
   };
+
   const getRemovable = (grid) => {
     let result = [];
-    for (let y = 0; y < input.length; y++) {
-      for (let x = 0; x < input[y].length; x++) {
-        if (grid[`${x},${y}`] !== "@") continue;
-        let n = getNeighbors(x, y, grid);
+    for (let y = 0; y < maxY; y++) {
+      for (let x = 0; x < maxX; x++) {
+        if (getValue(grid, x, y) !== "@") continue;
+        let n = getNeighbors(grid, x, y);
         if (n.length < 4) {
           result.push([x, y]);
         }
@@ -43,7 +50,7 @@ function solve(input) {
     return result;
   };
 
-  p1 = getRemovable(grid).length;
+  const p1 = getRemovable(grid).length;
 
   // Part 2
   let p2 = 0;
@@ -53,7 +60,7 @@ function solve(input) {
     removed = removable.length;
     p2 += removed;
     for (let [x, y] of removable) {
-      grid[`${x},${y}`] = "#";
+      setValue(grid, x, y, "#");
     }
   }
 
